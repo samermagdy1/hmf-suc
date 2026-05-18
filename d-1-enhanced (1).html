@@ -1,0 +1,4569 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نظام تحليل جودة العسل - لوحة التحكم</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Amiri:wght@400;700&display=swap');
+
+    :root {
+      --gold: #C9A84C;
+      --gold-light: #E8C97A;
+      --gold-dark: #8B6914;
+      --amber: #D4870A;
+      --honey: #F2A900;
+      --dark: #0D0D0D;
+      --dark-2: #1A1610;
+      --dark-3: #231E14;
+      --panel: #1E1A10;
+      --panel-border: #3D3420;
+      --text-primary: #F5EDD6;
+      --text-secondary: #A89060;
+      --text-muted: #6B5A3A;
+      --success: #4CAF7A;
+      --danger: #E05252;
+      --warning: #E8A030;
+      --info: #5B9BD5;
+      --critical: #FF4444;
+      --safe: #44BB77;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--dark);
+      color: var(--text-primary);
+      font-family: 'Cairo', sans-serif;
+      min-height: 100vh;
+      direction: rtl;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 20%, rgba(201, 168, 76, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(212, 135, 10, 0.06) 0%, transparent 50%),
+        repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(201, 168, 76, 0.01) 40px, rgba(201, 168, 76, 0.01) 41px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app-container {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ============ HEADER ============ */
+    .header {
+      background: linear-gradient(135deg, #1A1408 0%, #0D0A05 100%);
+      border-bottom: 2px solid var(--gold-dark);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 72px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.6), 0 1px 0 rgba(201, 168, 76, 0.2);
+      gap: 12px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+    }
+
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--amber) 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 4px 15px rgba(201, 168, 76, 0.4);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .logo-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .logo-text h1 {
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--gold-light);
+      letter-spacing: -0.5px;
+      white-space: nowrap;
+    }
+
+    .logo-text p {
+      font-size: 10px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .upload-btn,
+    .export-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--amber) 100%);
+      color: var(--dark);
+      border: none;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-family: 'Cairo', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(201, 168, 76, 0.3);
+      white-space: nowrap;
+    }
+
+    .export-btn {
+      background: linear-gradient(135deg, #2D5A27 0%, #1A3A15 100%);
+      color: var(--success);
+      box-shadow: 0 4px 15px rgba(76, 175, 122, 0.2);
+    }
+
+    .upload-btn:hover,
+    .export-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(201, 168, 76, 0.5);
+    }
+
+    .date-badge {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    /* Hamburger */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      padding: 8px;
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      background: var(--panel);
+      flex-shrink: 0;
+    }
+
+    .hamburger span {
+      display: block;
+      width: 22px;
+      height: 2px;
+      background: var(--gold-light);
+      border-radius: 2px;
+      transition: all 0.3s;
+    }
+
+    /* ============ NAV TABS ============ */
+    .nav-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 10px 24px;
+      background: var(--dark-2);
+      border-bottom: 1px solid var(--panel-border);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .nav-tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .nav-tab {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 16px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      font-family: 'Cairo', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: transparent;
+      transition: all 0.25s;
+      white-space: nowrap;
+    }
+
+    .nav-tab:hover {
+      background: rgba(201, 168, 76, 0.08);
+      color: var(--text-secondary);
+      border-color: var(--panel-border);
+    }
+
+    .nav-tab.active {
+      background: rgba(201, 168, 76, 0.15);
+      color: var(--gold-light);
+      border-color: var(--gold-dark);
+    }
+
+    /* ============ MAIN CONTENT ============ */
+    .main-content {
+      padding: 20px 24px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+      animation: fadeSlideIn 0.4s ease both;
+    }
+
+    /* ============ FILTERS BAR ============ */
+    .filters-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      align-items: flex-end;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      flex: 1;
+      min-width: 130px;
+    }
+
+    .filter-group label {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .filter-select,
+    .filter-input {
+      background: var(--dark-3);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: var(--text-primary);
+      font-family: 'Cairo', sans-serif;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+      direction: rtl;
+      width: 100%;
+    }
+
+    .filter-select:focus,
+    .filter-input:focus {
+      border-color: var(--gold-dark);
+    }
+
+    .filter-select option {
+      background: var(--dark-3);
+    }
+
+    .apply-btn {
+      background: linear-gradient(135deg, var(--gold) 0%, var(--amber) 100%);
+      color: var(--dark);
+      border: none;
+      padding: 9px 20px;
+      border-radius: 8px;
+      font-family: 'Cairo', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .apply-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(201, 168, 76, 0.4);
+    }
+
+    .reset-btn {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--panel-border);
+      padding: 9px 16px;
+      border-radius: 8px;
+      font-family: 'Cairo', sans-serif;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .reset-btn:hover {
+      border-color: var(--gold-dark);
+      color: var(--text-secondary);
+    }
+
+    /* ============ STATS GRID ============ */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      opacity: 0.08;
+      transform: translate(20px, -20px);
+    }
+
+    .stat-card.gold::before {
+      background: var(--gold);
+    }
+
+    .stat-card.amber::before {
+      background: var(--amber);
+    }
+
+    .stat-card.success::before {
+      background: var(--success);
+    }
+
+    .stat-card.danger::before {
+      background: var(--danger);
+    }
+
+    .stat-card.info::before {
+      background: var(--info);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .stat-icon.gold {
+      background: rgba(201, 168, 76, 0.2);
+    }
+
+    .stat-icon.amber {
+      background: rgba(212, 135, 10, 0.2);
+    }
+
+    .stat-icon.success {
+      background: rgba(76, 175, 122, 0.2);
+    }
+
+    .stat-icon.danger {
+      background: rgba(224, 82, 82, 0.2);
+    }
+
+    .stat-icon.info {
+      background: rgba(91, 155, 213, 0.2);
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-value.gold {
+      color: var(--gold-light);
+    }
+
+    .stat-value.amber {
+      color: var(--amber);
+    }
+
+    .stat-value.success {
+      color: var(--success);
+    }
+
+    .stat-value.danger {
+      color: var(--danger);
+    }
+
+    .stat-value.info {
+      color: var(--info);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .stat-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ============ CHARTS GRID ============ */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+
+    .chart-card {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      padding: 18px;
+    }
+
+    .chart-card.wide {
+      grid-column: 1 / -1;
+    }
+
+    .chart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chart-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .chart-zoom-hint {
+      font-size: 10px; color: var(--text-muted);
+      opacity: 0; transition: opacity 0.3s;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .chart-card:hover .chart-zoom-hint { opacity: 1; }
+
+    .chart-title .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--gold);
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 260px;
+    }
+
+    .chart-wrap.tall {
+      height: 340px;
+    }
+
+    /* ============ TABLE ============ */
+    .table-card {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .table-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--panel-border);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .table-header h3 {
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .table-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    thead th {
+      background: var(--dark-3);
+      padding: 10px 12px;
+      text-align: right;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      border-bottom: 1px solid var(--panel-border);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(61, 52, 32, 0.5);
+      transition: background 0.15s;
+    }
+
+    tbody tr:hover {
+      background: rgba(201, 168, 76, 0.05);
+    }
+
+    tbody td {
+      padding: 9px 12px;
+      color: var(--text-primary);
+      white-space: nowrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .badge.safe {
+      background: rgba(76, 175, 122, 0.2);
+      color: #4CAF7A;
+    }
+
+    .badge.warning {
+      background: rgba(232, 160, 48, 0.2);
+      color: #E8A030;
+    }
+
+    .badge.danger {
+      background: rgba(224, 82, 82, 0.2);
+      color: #E05252;
+    }
+
+    .badge.info {
+      background: rgba(91, 155, 213, 0.2);
+      color: #5B9BD5;
+    }
+
+    .val-critical {
+      color: var(--critical) !important;
+      font-weight: 700;
+    }
+
+    .val-warning {
+      color: var(--warning) !important;
+      font-weight: 700;
+    }
+
+    .val-safe {
+      color: var(--safe) !important;
+    }
+
+    /* ============ ACTION BUTTONS ============ */
+    .action-btns {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .btn-sm {
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-family: 'Cairo', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .btn-view {
+      background: rgba(91, 155, 213, 0.2);
+      color: #5B9BD5;
+    }
+
+    .btn-view:hover {
+      background: rgba(91, 155, 213, 0.35);
+    }
+
+    .btn-edit {
+      background: rgba(201, 168, 76, 0.2);
+      color: var(--gold-light);
+    }
+
+    .btn-edit:hover {
+      background: rgba(201, 168, 76, 0.35);
+    }
+
+    .btn-delete {
+      background: rgba(224, 82, 82, 0.2);
+      color: #E05252;
+    }
+
+    .btn-delete:hover {
+      background: rgba(224, 82, 82, 0.35);
+    }
+
+    .btn-print {
+      background: rgba(76, 175, 122, 0.2);
+      color: #4CAF7A;
+    }
+
+    .btn-print:hover {
+      background: rgba(76, 175, 122, 0.35);
+    }
+
+    /* ============ DEVIATION MONITOR ============ */
+    .dev-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+
+    .dev-card {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      padding: 18px;
+    }
+
+    .dev-card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .dev-card p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .threshold-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .threshold-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .threshold-item label {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .threshold-item input {
+      background: var(--dark-3);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 6px 10px;
+      color: var(--text-primary);
+      font-family: 'Cairo', sans-serif;
+      font-size: 13px;
+      width: 110px;
+      outline: none;
+    }
+
+    .threshold-item input:focus {
+      border-color: var(--gold-dark);
+    }
+
+    .gauge-container {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .gauge-wrap {
+      flex: 1;
+      min-width: 120px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .gauge-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .gauge-val {
+      font-size: 26px;
+      font-weight: 900;
+    }
+
+    .gauge-status {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 20px;
+    }
+
+    .gauge-status.safe {
+      background: rgba(76, 175, 122, 0.2);
+      color: #4CAF7A;
+    }
+
+    .gauge-status.danger {
+      background: rgba(224, 82, 82, 0.2);
+      color: #E05252;
+    }
+
+    .gauge-status.warning {
+      background: rgba(232, 160, 48, 0.2);
+      color: #E8A030;
+    }
+
+    /* ============ SEARCH ============ */
+    .search-section {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      padding: 22px;
+      margin-bottom: 20px;
+    }
+
+    .search-bar-wrap {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .search-input-big {
+      flex: 1;
+      background: var(--dark-3);
+      border: 2px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: var(--text-primary);
+      font-family: 'Cairo', sans-serif;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      direction: rtl;
+      min-width: 0;
+    }
+
+    .search-input-big:focus {
+      border-color: var(--gold);
+    }
+
+    .search-input-big::placeholder {
+      color: var(--text-muted);
+    }
+
+    .search-btn {
+      background: linear-gradient(135deg, var(--gold) 0%, var(--amber) 100%);
+      color: var(--dark);
+      border: none;
+      padding: 12px 22px;
+      border-radius: 12px;
+      font-family: 'Cairo', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .search-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(201, 168, 76, 0.4);
+    }
+
+    .search-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .search-tag {
+      padding: 5px 12px;
+      background: var(--dark-3);
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .search-tag:hover {
+      border-color: var(--gold-dark);
+      color: var(--gold-light);
+    }
+
+    .search-results-info {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .search-results-info span {
+      color: var(--gold-light);
+      font-weight: 700;
+    }
+
+    /* ============ DATA ENTRY ============ */
+    .entry-form {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      padding: 22px;
+      margin-bottom: 20px;
+    }
+
+    .entry-form h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 18px;
+      color: var(--gold-light);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-group label {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .form-group input,
+    .form-group select {
+      background: var(--dark-3);
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: var(--text-primary);
+      font-family: 'Cairo', sans-serif;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+      direction: rtl;
+      width: 100%;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: var(--gold);
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .save-btn {
+      background: linear-gradient(135deg, var(--success) 0%, #2D8F5A 100%);
+      color: white;
+      border: none;
+      padding: 11px 24px;
+      border-radius: 10px;
+      font-family: 'Cairo', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .save-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(76, 175, 122, 0.4);
+    }
+
+    .clear-form-btn {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--panel-border);
+      padding: 11px 18px;
+      border-radius: 10px;
+      font-family: 'Cairo', sans-serif;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    /* ============ ALERT BANNER ============ */
+    .alert-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 18px;
+      border-radius: 12px;
+      margin-bottom: 18px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .alert-banner.danger {
+      background: rgba(224, 82, 82, 0.15);
+      border: 1px solid rgba(224, 82, 82, 0.3);
+      color: #E05252;
+    }
+
+    .alert-banner.warning {
+      background: rgba(232, 160, 48, 0.15);
+      border: 1px solid rgba(232, 160, 48, 0.3);
+      color: #E8A030;
+    }
+
+    .alert-banner.success {
+      background: rgba(76, 175, 122, 0.15);
+      border: 1px solid rgba(76, 175, 122, 0.3);
+      color: #4CAF7A;
+    }
+
+    /* ============ PAGINATION ============ */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 14px;
+      flex-wrap: wrap;
+    }
+
+    .page-btn {
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      border: 1px solid var(--panel-border);
+      background: var(--dark-3);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 12px;
+      font-family: 'Cairo', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .page-btn:hover,
+    .page-btn.active {
+      border-color: var(--gold-dark);
+      background: rgba(201, 168, 76, 0.15);
+      color: var(--gold-light);
+    }
+
+    /* ============ LOADING / EMPTY ============ */
+    .empty-state {
+      text-align: center;
+      padding: 50px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state .icon {
+      font-size: 42px;
+      margin-bottom: 14px;
+      opacity: 0.5;
+    }
+
+    .empty-state h3 {
+      font-size: 16px;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+    }
+
+    .empty-state p {
+      font-size: 12px;
+    }
+
+    /* ============ TOAST ============ */
+    .toast-container {
+      position: fixed;
+      top: 80px;
+      left: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      animation: slideIn 0.3s ease;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      max-width: 300px;
+    }
+
+    .toast.success {
+      border-color: rgba(76, 175, 122, 0.4);
+      color: #4CAF7A;
+    }
+
+    .toast.error {
+      border-color: rgba(224, 82, 82, 0.4);
+      color: #E05252;
+    }
+
+    .toast.info {
+      border-color: rgba(91, 155, 213, 0.4);
+      color: #5B9BD5;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(-100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    /* ============ SECTION TITLE ============ */
+    .section-title {
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--gold-light);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to left, transparent, var(--panel-border));
+      min-width: 30px;
+    }
+
+    /* ============ RESULT CARDS ============ */
+    .result-card {
+      background: var(--dark-3);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .result-card:hover {
+      border-color: var(--gold-dark);
+    }
+
+    .result-card .rc-batch {
+      background: rgba(201, 168, 76, 0.15);
+      border: 1px solid rgba(201, 168, 76, 0.3);
+      border-radius: 8px;
+      padding: 6px 12px;
+      text-align: center;
+    }
+
+    .result-card .rc-batch .batch-num {
+      font-size: 14px;
+      font-weight: 900;
+      color: var(--gold-light);
+    }
+
+    .result-card .rc-batch .batch-label {
+      font-size: 9px;
+      color: var(--text-muted);
+    }
+
+    .result-card .rc-info .type-name {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .result-card .rc-info .meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .result-card .rc-vals {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .rc-val-item {
+      text-align: center;
+    }
+
+    .rc-val-item .val-num {
+      font-size: 16px;
+      font-weight: 900;
+    }
+
+    .rc-val-item .val-lbl {
+      font-size: 9px;
+      color: var(--text-muted);
+    }
+
+    /* Control chart legend */
+    .ctrl-legend {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--panel-border);
+    }
+
+    .ctrl-leg-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .ctrl-leg-line {
+      width: 22px;
+      height: 2px;
+      border-radius: 1px;
+    }
+
+    /* ============ MODAL ============ */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-overlay.hidden {
+      display: none;
+    }
+
+    .modal-box {
+      background: var(--dark-2);
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      padding: 28px;
+      width: 100%;
+      max-width: 700px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+      position: relative;
+    }
+
+    .modal-box.sm {
+      max-width: 460px;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--panel-border);
+    }
+
+    .modal-header h3 {
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--gold-light);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--panel-border);
+      background: var(--dark-3);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .modal-close:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .modal-footer {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--panel-border);
+      flex-wrap: wrap;
+    }
+
+    /* View Record Details */
+    .record-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .detail-item {
+      background: var(--dark-3);
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      padding: 12px;
+    }
+
+    .detail-item .d-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .detail-item .d-value {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .detail-item .d-value.critical {
+      color: var(--critical);
+    }
+
+    .detail-item .d-value.safe {
+      color: var(--safe);
+    }
+
+    /* ============ SETTINGS ============ */
+    .settings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .settings-card {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      padding: 22px;
+    }
+
+    .settings-card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--gold-light);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .settings-card p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+    }
+
+    .logo-upload-area {
+      border: 2px dashed var(--panel-border);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 14px;
+    }
+
+    .logo-upload-area:hover {
+      border-color: var(--gold-dark);
+      background: rgba(201, 168, 76, 0.05);
+    }
+
+    .logo-upload-area .preview {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 10px;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .logo-upload-area .preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .logo-upload-area .placeholder {
+      font-size: 36px;
+      opacity: 0.4;
+      margin-bottom: 8px;
+    }
+
+    .logo-upload-area p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 0;
+    }
+
+    .settings-input {
+      background: var(--dark-3);
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: var(--text-primary);
+      font-family: 'Cairo', sans-serif;
+      font-size: 14px;
+      outline: none;
+      width: 100%;
+      margin-bottom: 12px;
+      direction: rtl;
+      transition: border-color 0.2s;
+    }
+
+    .settings-input:focus {
+      border-color: var(--gold);
+    }
+
+    .danger-zone {
+      border-color: rgba(224, 82, 82, 0.3);
+    }
+
+    .danger-zone h3 {
+      color: var(--danger);
+    }
+
+    .danger-zone .settings-input {
+      border-color: rgba(224, 82, 82, 0.3);
+    }
+
+    .danger-zone .settings-input:focus {
+      border-color: var(--danger);
+    }
+
+    .danger-btn {
+      background: linear-gradient(135deg, #C0392B 0%, #8B1A1A 100%);
+      color: white;
+      border: none;
+      padding: 11px 22px;
+      border-radius: 10px;
+      font-family: 'Cairo', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+    }
+
+    .danger-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(224, 82, 82, 0.4);
+    }
+
+    .primary-btn {
+      background: linear-gradient(135deg, var(--gold) 0%, var(--amber) 100%);
+      color: var(--dark);
+      border: none;
+      padding: 11px 22px;
+      border-radius: 10px;
+      font-family: 'Cairo', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+    }
+
+    .primary-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(201, 168, 76, 0.4);
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--panel-border);
+      font-size: 12px;
+    }
+
+    .info-row:last-child {
+      border-bottom: none;
+    }
+
+    .info-row .lbl {
+      color: var(--text-muted);
+    }
+
+    .info-row .val {
+      color: var(--gold-light);
+      font-weight: 700;
+    }
+
+    /* ============ REPORTS ============ */
+    .reports-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .report-card {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      padding: 22px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .report-card:hover {
+      border-color: var(--gold-dark);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .report-card .rpt-icon {
+      font-size: 36px;
+    }
+
+    .report-card h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .report-card p {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .report-filters {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .report-filters h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--gold-light);
+      margin-bottom: 14px;
+    }
+
+    /* ============ EXPORT SECTION ============ */
+    .export-btns {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-export {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 16px;
+      border-radius: 10px;
+      font-family: 'Cairo', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+
+    .btn-xlsx {
+      background: rgba(76, 175, 122, 0.2);
+      color: #4CAF7A;
+      border: 1px solid rgba(76, 175, 122, 0.3);
+    }
+
+    .btn-xlsx:hover {
+      background: rgba(76, 175, 122, 0.35);
+    }
+
+    .btn-csv {
+      background: rgba(91, 155, 213, 0.2);
+      color: #5B9BD5;
+      border: 1px solid rgba(91, 155, 213, 0.3);
+    }
+
+    .btn-csv:hover {
+      background: rgba(91, 155, 213, 0.35);
+    }
+
+    .btn-json {
+      background: rgba(232, 160, 48, 0.2);
+      color: #E8A030;
+      border: 1px solid rgba(232, 160, 48, 0.3);
+    }
+
+    .btn-json:hover {
+      background: rgba(232, 160, 48, 0.35);
+    }
+
+    /* ============ BRAND ============ */
+    .rotation-number {
+      font-family: monospace;
+      font-size: 12px;
+      color: var(--info);
+      font-weight: 700;
+    }
+
+    /* ============ PRINT STYLES ============ */
+    @media print {
+      body {
+        background: white !important;
+        color: black !important;
+        direction: rtl;
+      }
+
+      body::before {
+        display: none;
+      }
+
+      .header,
+      .nav-tabs,
+      .filters-bar,
+      .toast-container,
+      .modal-overlay,
+      .action-btns,
+      .hamburger,
+      .header-actions {
+        display: none !important;
+      }
+
+      .main-content {
+        padding: 0 !important;
+      }
+
+      .section {
+        display: none !important;
+      }
+
+      .section.print-active {
+        display: block !important;
+      }
+
+      .stat-card,
+      .chart-card,
+      .table-card,
+      .dev-card {
+        background: white !important;
+        border: 1px solid #ccc !important;
+      }
+
+      .stat-value,
+      .stat-label,
+      .stat-sub {
+        color: black !important;
+      }
+
+      tbody td,
+      thead th {
+        color: black !important;
+        border-color: #ddd !important;
+      }
+
+      .badge.safe {
+        background: #d4edda !important;
+        color: #155724 !important;
+      }
+
+      .badge.danger {
+        background: #f8d7da !important;
+        color: #721c24 !important;
+      }
+
+      .val-critical {
+        color: red !important;
+      }
+
+      .val-safe {
+        color: green !important;
+      }
+
+      thead th {
+        background: #f5f5f5 !important;
+      }
+
+      .charts-grid {
+        grid-template-columns: 1fr 1fr !important;
+      }
+
+      canvas {
+        max-width: 100%;
+      }
+
+      .print-header {
+        display: flex !important;
+        align-items: center;
+        gap: 16px;
+        padding: 16px;
+        border-bottom: 2px solid #C9A84C;
+        margin-bottom: 20px;
+      }
+
+      .print-header img {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 8px;
+      }
+
+      .print-header .company-name {
+        font-size: 22px;
+        font-weight: 900;
+        color: #8B6914;
+      }
+
+      .print-header .report-title {
+        font-size: 14px;
+        color: #666;
+      }
+
+      .print-footer {
+        display: flex !important;
+        justify-content: space-between;
+        font-size: 11px;
+        color: #999;
+        padding: 10px 0;
+        border-top: 1px solid #ddd;
+        margin-top: 20px;
+      }
+
+      .no-print {
+        display: none !important;
+      }
+    }
+
+    .print-header,
+    .print-footer {
+      display: none;
+    }
+
+    /* ============ RESPONSIVE ============ */
+    @media (max-width: 1024px) {
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .dev-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .header {
+        padding: 0 14px;
+        height: 60px;
+      }
+
+      .logo-text h1 {
+        font-size: 13px;
+      }
+
+      .logo-text p {
+        display: none;
+      }
+
+      .logo-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+      }
+
+      .date-badge {
+        display: none;
+      }
+
+      .upload-btn span {
+        display: none;
+      }
+
+      .hamburger {
+        display: flex;
+      }
+
+      .nav-tabs {
+        padding: 8px 14px;
+      }
+
+      .nav-tab {
+        padding: 7px 12px;
+        font-size: 11px;
+      }
+
+      .nav-tab span.tab-label {
+        display: none;
+      }
+
+      .main-content {
+        padding: 14px;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .result-card {
+        grid-template-columns: auto 1fr;
+      }
+
+      .result-card .rc-vals {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .dev-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .settings-grid {
+        grid-template-columns: 1fr !important;
+      }
+
+      .reports-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .modal-box {
+        padding: 18px;
+      }
+
+      .record-detail-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .header-actions {
+        gap: 5px;
+      }
+
+      .export-btns {
+        gap: 6px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .filters-bar {
+        gap: 6px;
+      }
+
+      .filter-group {
+        min-width: 100%;
+      }
+
+      .search-bar-wrap {
+        flex-direction: column;
+      }
+
+      .reports-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .modal-box {
+        padding: 14px;
+      }
+
+      .record-detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .result-card {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--dark-2);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--panel-border);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--gold-dark);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 8px;
+      background: rgba(201, 168, 76, 0.1);
+      border: 1px solid rgba(201, 168, 76, 0.2);
+      border-radius: 20px;
+      font-size: 11px;
+      color: var(--gold-light);
+    }
+
+    /* Storage indicator */
+    .storage-badge {
+      background: rgba(76, 175, 122, 0.15);
+      border: 1px solid rgba(76, 175, 122, 0.3);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 10px;
+      color: #4CAF7A;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* ============ THRESHOLD MODAL ============ */
+    .apply-option-btn {
+      flex: 1; padding: 12px 16px; border-radius: 12px; border: 2px solid var(--panel-border);
+      background: var(--dark-3); color: var(--text-secondary); cursor: pointer;
+      font-family: 'Cairo', sans-serif; font-size: 13px; font-weight: 700;
+      transition: all 0.3s; text-align: center; min-width: 140px;
+    }
+    .apply-option-btn.selected {
+      border-color: var(--gold); background: rgba(201,168,76,0.15); color: var(--gold-light);
+    }
+    .apply-option-btn:hover { border-color: var(--gold-dark); color: var(--gold-light); }
+
+    /* ============ ANIMATED CARDS ============ */
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,76,0); }
+      50% { box-shadow: 0 0 25px 8px rgba(201,168,76,0.2); }
+    }
+    .stat-card {
+      cursor: pointer;
+      animation: fadeSlideIn 0.5s ease both;
+    }
+    .stat-card:nth-child(1) { animation-delay: 0.05s; }
+    .stat-card:nth-child(2) { animation-delay: 0.1s; }
+    .stat-card:nth-child(3) { animation-delay: 0.15s; }
+    .stat-card:nth-child(4) { animation-delay: 0.2s; }
+    .stat-card:nth-child(5) { animation-delay: 0.25s; }
+    .stat-card:nth-child(6) { animation-delay: 0.3s; }
+
+    .chart-card {
+      animation: fadeSlideIn 0.6s ease both;
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+      cursor: pointer;
+    }
+    .chart-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 20px rgba(201,168,76,0.1);
+      border-color: var(--gold-dark);
+    }
+
+    /* Tooltip for stat click */
+    .stat-tooltip {
+      position: fixed; z-index: 5000;
+      background: var(--dark-2);
+      border: 1px solid var(--gold-dark);
+      border-radius: 14px; padding: 18px 22px;
+      min-width: 240px; max-width: 320px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+      animation: fadeSlideIn 0.25s ease;
+      direction: rtl;
+    }
+    .stat-tooltip h4 { font-size: 14px; font-weight: 900; color: var(--gold-light); margin-bottom: 12px; }
+    .stat-tooltip .tt-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 6px 0; border-bottom: 1px solid rgba(61,52,32,0.5);
+      font-size: 12px;
+    }
+    .stat-tooltip .tt-row:last-child { border-bottom: none; }
+    .stat-tooltip .tt-label { color: var(--text-muted); }
+    .stat-tooltip .tt-val { color: var(--gold-light); font-weight: 700; }
+    .stat-tooltip .tt-close {
+      position: absolute; top: 10px; left: 10px;
+      width: 24px; height: 24px; border-radius: 6px;
+      border: 1px solid var(--panel-border); background: var(--dark-3);
+      color: var(--text-muted); cursor: pointer; font-size: 12px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Chart detail popup */
+    .chart-detail-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+      z-index: 4000; display: flex; align-items: center; justify-content: center;
+      padding: 20px; backdrop-filter: blur(6px);
+      animation: fadeSlideIn 0.3s ease;
+    }
+    .chart-detail-box {
+      background: var(--dark-2); border: 1px solid var(--gold-dark);
+      border-radius: 20px; padding: 24px;
+      width: 100%; max-width: 900px;
+      max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    }
+    .chart-detail-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px; padding-bottom: 14px;
+      border-bottom: 1px solid var(--panel-border);
+    }
+
+    /* Mobile responsive improvements */
+    @media (max-width: 600px) {
+      .charts-grid { grid-template-columns: 1fr !important; }
+      .chart-wrap { height: 220px !important; }
+      .chart-wrap.tall { height: 280px !important; }
+      .dev-grid { grid-template-columns: 1fr !important; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+      .result-card { grid-template-columns: 1fr !important; gap: 8px; }
+      .settings-grid { grid-template-columns: 1fr !important; }
+    }
+    @media (max-width: 380px) {
+      .stats-grid { grid-template-columns: 1fr !important; }
+      .main-content { padding: 10px !important; }
+    }
+
+  </style>
+</head>
+
+<body>
+  <div class="app-container">
+
+    <!-- TOAST -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ===== MODALS ===== -->
+    <!-- View Modal -->
+    <div class="modal-overlay hidden" id="viewModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3>👁️ تفاصيل التشغيلة</h3>
+          <button class="modal-close" onclick="closeModal('viewModal')">✕</button>
+        </div>
+        <div id="viewModalContent"></div>
+        <div class="modal-footer">
+          <button class="btn-sm btn-print" onclick="printSingleRecord()">🖨️ طباعة</button>
+          <button class="btn-sm btn-edit" onclick="editFromView()">✏️ تعديل</button>
+          <button class="save-btn" onclick="closeModal('viewModal')">إغلاق</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal-overlay hidden" id="editModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3>✏️ تعديل التشغيلة</h3>
+          <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+        </div>
+        <div class="form-grid" id="editFormGrid">
+          <div class="form-group">
+            <label>التاريخ</label>
+            <input type="date" id="edit_date">
+          </div>
+          <div class="form-group">
+            <label>رقم التشغيلة</label>
+            <input type="text" id="edit_batch">
+          </div>
+          <div class="form-group">
+            <label>الصنف</label>
+            <input type="text" id="edit_type">
+          </div>
+          <div class="form-group">
+            <label>سكروز الخلط</label>
+            <input type="number" step="0.001" id="edit_mixSuc">
+          </div>
+          <div class="form-group">
+            <label>HMF الخلط</label>
+            <input type="number" step="0.001" id="edit_mixHMF">
+          </div>
+          <div class="form-group">
+            <label>سكروز التنقية</label>
+            <input type="number" step="0.001" id="edit_purSuc">
+          </div>
+          <div class="form-group">
+            <label>HMF التنقية</label>
+            <input type="number" step="0.001" id="edit_purHMF">
+          </div>
+          <div class="form-group">
+            <label>سكروز المنتج ✱</label>
+            <input type="number" step="0.001" id="edit_finSuc">
+          </div>
+          <div class="form-group">
+            <label>HMF المنتج ✱</label>
+            <input type="number" step="0.001" id="edit_finHMF">
+          </div>
+          <div class="form-group">
+            <label>O-Rotation</label>
+            <input type="text" id="edit_rotation">
+          </div>
+          <div class="form-group">
+            <label>الوزن</label>
+            <input type="text" id="edit_weight">
+          </div>
+        </div>
+        <input type="hidden" id="edit_index">
+        <div class="modal-footer">
+          <button class="clear-form-btn" onclick="closeModal('editModal')">إلغاء</button>
+          <button class="save-btn" onclick="saveEdit()">💾 حفظ التعديلات</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirm Modal -->
+    <div class="modal-overlay hidden" id="deleteModal">
+      <div class="modal-box sm">
+        <div class="modal-header">
+          <h3>🗑️ تأكيد الحذف</h3>
+          <button class="modal-close" onclick="closeModal('deleteModal')">✕</button>
+        </div>
+        <p style="color:var(--text-secondary); margin-bottom:16px; font-size:14px;">هل أنت متأكد من حذف هذا السجل؟ لا
+          يمكن التراجع عن هذه العملية.</p>
+        <div id="deleteRecordInfo"
+          style="background:var(--dark-3); border-radius:10px; padding:14px; margin-bottom:16px;"></div>
+        <input type="hidden" id="delete_index">
+        <div class="modal-footer">
+          <button class="clear-form-btn" onclick="closeModal('deleteModal')">إلغاء</button>
+          <button class="danger-btn" style="width:auto; padding:10px 22px;" onclick="confirmDelete()">🗑️ حذف
+            نهائي</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Print Preview Modal -->
+    <div class="modal-overlay hidden" id="printModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3>🖨️ خيارات الطباعة</h3>
+          <button class="modal-close" onclick="closeModal('printModal')">✕</button>
+        </div>
+        <div
+          style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:20px;">
+          <button class="report-card" onclick="printReport('dashboard')"
+            style="padding:16px; font-family:Cairo,sans-serif;">
+            <div class="rpt-icon">📊</div>
+            <h4 style="margin:0">لوحة التحكم الكاملة</h4>
+            <p style="margin:0">طباعة الإحصاءات والرسوم</p>
+          </button>
+          <button class="report-card" onclick="printReport('table')"
+            style="padding:16px; font-family:Cairo,sans-serif;">
+            <div class="rpt-icon">📋</div>
+            <h4 style="margin:0">جدول البيانات</h4>
+            <p style="margin:0">طباعة جميع التشغيلات المصفّاة</p>
+          </button>
+          <button class="report-card" onclick="printReport('critical')"
+            style="padding:16px; font-family:Cairo,sans-serif;">
+            <div class="rpt-icon">⚠️</div>
+            <h4 style="margin:0">السجلات الحرجة</h4>
+            <p style="margin:0">التشغيلات خارج حدود الجودة</p>
+          </button>
+          <button class="report-card" onclick="printReport('control')"
+            style="padding:16px; font-family:Cairo,sans-serif;">
+            <div class="rpt-icon">📉</div>
+            <h4 style="margin:0">مراقبة الانحراف</h4>
+            <p style="margin:0">رسوم التحكم SPC</p>
+          </button>
+        </div>
+        <div class="modal-footer">
+          <button class="clear-form-btn" onclick="closeModal('printModal')">إغلاق</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HEADER -->
+    <header class="header">
+      <div class="logo">
+        <div class="logo-icon" id="headerLogoIcon">🍯</div>
+        <div class="logo-text">
+          <h1 id="headerCompanyName">نظام تحليل جودة العسل</h1>
+          <p>لوحة متابعة ومراقبة التشغيلات الإنتاجية</p>
+        </div>
+      </div>
+      <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileMenu()">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="header-actions" id="headerActions">
+        <div class="storage-badge" id="storageBadge">💾 غير محفوظ</div>
+        <div class="date-badge" id="dateBadge">📅 ...</div>
+        <label class="upload-btn">
+          📂 <span>استيراد Excel</span>
+          <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none" onchange="loadExcelFile(this)">
+        </label>
+        <button class="export-btn" onclick="showExportMenu()">📤 <span>تصدير</span></button>
+        <button class="upload-btn" style="background:linear-gradient(135deg,#2B2B8B,#1A1A5A);color:#8BA5E8;"
+          onclick="openModal('printModal')">🖨️ <span>طباعة</span></button>
+      </div>
+    </header>
+
+    <!-- NAV TABS -->
+    <nav class="nav-tabs" id="navTabs">
+      <button class="nav-tab active" onclick="switchTab('dashboard', this)">📊 <span class="tab-label">لوحة
+          التحكم</span></button>
+      <button class="nav-tab" onclick="switchTab('control', this)">📉 <span class="tab-label">مراقبة
+          الانحراف</span></button>
+      <button class="nav-tab" onclick="switchTab('search', this)">🔍 <span class="tab-label">البحث</span></button>
+      <button class="nav-tab" onclick="switchTab('table', this)">📋 <span class="tab-label">جدول
+          البيانات</span></button>
+      <button class="nav-tab" onclick="switchTab('entry', this)">➕ <span class="tab-label">إدخال بيانات</span></button>
+      <button class="nav-tab" onclick="switchTab('reports', this)">📄 <span class="tab-label">التقارير</span></button>
+      <button class="nav-tab" onclick="switchTab('settings', this)">⚙️ <span class="tab-label">الإعدادات</span></button>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+      <!-- ===== DASHBOARD SECTION ===== -->
+      <section class="section active" id="sec-dashboard">
+        <!-- Print Header (visible only in print) -->
+        <div class="print-header" id="printHeaderDash">
+          <div id="printLogoImg"></div>
+          <div>
+            <div class="company-name" id="printCompanyNameDash">نظام تحليل جودة العسل</div>
+            <div class="report-title">تقرير لوحة التحكم الشاملة</div>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-bar">
+          <div class="filter-group">
+            <label>الصنف</label>
+            <select class="filter-select" id="filterType">
+              <option value="">جميع الأصناف</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>من تاريخ</label>
+            <input type="date" class="filter-input" id="filterDateFrom">
+          </div>
+          <div class="filter-group">
+            <label>إلى تاريخ</label>
+            <input type="date" class="filter-input" id="filterDateTo">
+          </div>
+          <div class="filter-group">
+            <label>رقم التشغيلة</label>
+            <input type="text" class="filter-input" id="filterBatch" placeholder="مثال: 1439">
+          </div>
+          <button class="apply-btn" onclick="applyFilters()">تطبيق</button>
+          <button class="reset-btn" onclick="resetFilters()">إعادة تعيين</button>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card gold" onclick="handleStatClick('total')" style="cursor:pointer">
+            <div class="stat-icon gold">🍯</div>
+            <div class="stat-value gold" id="statTotal">0</div>
+            <div class="stat-label">إجمالي التشغيلات</div>
+            <div class="stat-sub" id="statTotalSub">جميع السجلات</div>
+          </div>
+          <div class="stat-card amber" onclick="handleStatClick('types')" style="cursor:pointer">
+            <div class="stat-icon amber">🏷️</div>
+            <div class="stat-value amber" id="statTypes">0</div>
+            <div class="stat-label">أصناف العسل</div>
+            <div class="stat-sub" id="statTypesSub">نوع مختلف</div>
+          </div>
+          <div class="stat-card success" onclick="handleStatClick('pass')" style="cursor:pointer">
+            <div class="stat-icon success">✅</div>
+            <div class="stat-value success" id="statPass">0</div>
+            <div class="stat-label">تشغيلات ضمن الحد</div>
+            <div class="stat-sub">سكروز وHMF مقبول</div>
+          </div>
+          <div class="stat-card danger" onclick="handleStatClick('fail')" style="cursor:pointer">
+            <div class="stat-icon danger">⚠️</div>
+            <div class="stat-value danger" id="statFail">0</div>
+            <div class="stat-label">تشغيلات خارج الحد</div>
+            <div class="stat-sub">تجاوزت الانحراف الحرج</div>
+          </div>
+          <div class="stat-card info" onclick="handleStatClick('suc')" style="cursor:pointer">
+            <div class="stat-icon info">🔬</div>
+            <div class="stat-value info" id="statAvgSuc">0</div>
+            <div class="stat-label">متوسط السكروز</div>
+            <div class="stat-sub">القيمة العامة</div>
+          </div>
+          <div class="stat-card amber" onclick="handleStatClick('hmf')" style="cursor:pointer">
+            <div class="stat-icon amber">🌡️</div>
+            <div class="stat-value amber" id="statAvgHMF">0</div>
+            <div class="stat-label">متوسط HMF</div>
+            <div class="stat-sub">القيمة العامة</div>
+          </div>
+        </div>
+
+        <!-- Alert Banner -->
+        <div id="alertBanner" class="hidden"></div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title"><span class="dot"></span> توزيع الأصناف</div> <span class="chart-zoom-hint">🔍 انقر للتكبير</span>
+            </div>
+            <div class="chart-wrap" onclick="showChartDetail('typeChart', 'توزيع الأصناف')" title="انقر للتكبير" style="cursor:zoom-in"><canvas id="typeChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title"><span class="dot"></span> مقارنة متوسط السكروز حسب الصنف</div> <span class="chart-zoom-hint">🔍 انقر للتكبير</span>
+            </div>
+            <div class="chart-wrap" onclick="showChartDetail('sucByTypeChart', 'متوسط السكروز حسب الصنف')" title="انقر للتكبير" style="cursor:zoom-in"><canvas id="sucByTypeChart"></canvas></div>
+          </div>
+          <div class="chart-card wide">
+            <div class="chart-header">
+              <div class="chart-title"><span class="dot"></span> مسار قيم السكروز عبر التشغيلات</div> <span class="chart-zoom-hint">🔍 انقر للتكبير</span>
+            </div>
+            <div class="chart-wrap tall" onclick="showChartDetail('sucTrendChart', 'مسار قيم السكروز')" title="انقر للتكبير" style="cursor:zoom-in"><canvas id="sucTrendChart"></canvas></div>
+            <div class="ctrl-legend">
+              <div class="ctrl-leg-item">
+                <div class="ctrl-leg-line" style="background:#C9A84C"></div> قيمة السكروز
+              </div>
+              <div class="ctrl-leg-item">
+                <div class="ctrl-leg-line" style="background:#E05252"></div> UCL
+              </div>
+              <div class="ctrl-leg-item">
+                <div class="ctrl-leg-line" style="background:#4CAF7A"></div> LCL
+              </div>
+            </div>
+          </div>
+          <div class="chart-card wide">
+            <div class="chart-header">
+              <div class="chart-title"><span class="dot"></span> مسار قيم HMF عبر التشغيلات</div> <span class="chart-zoom-hint">🔍 انقر للتكبير</span>
+            </div>
+            <div class="chart-wrap tall" onclick="showChartDetail('hmfTrendChart', 'مسار قيم HMF')" title="انقر للتكبير" style="cursor:zoom-in"><canvas id="hmfTrendChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title"><span class="dot"></span> مقارنة متوسط HMF حسب الصنف</div> <span class="chart-zoom-hint">🔍 انقر للتكبير</span>
+            </div>
+            <div class="chart-wrap" onclick="showChartDetail('hmfByTypeChart', 'متوسط HMF حسب الصنف')" title="انقر للتكبير" style="cursor:zoom-in"><canvas id="hmfByTypeChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title"><span class="dot"></span> الانحراف (سكروز) حسب التشغيلة</div> <span class="chart-zoom-hint">🔍 انقر للتكبير</span>
+            </div>
+            <div class="chart-wrap" onclick="showChartDetail('devSucChart', 'الانحراف - السكروز')" title="انقر للتكبير" style="cursor:zoom-in"><canvas id="devSucChart"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Critical Records -->
+        <div class="table-card">
+          <div class="table-header">
+            <h3>⚠️ السجلات الخارجة عن حدود التحكم</h3>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span class="badge danger" id="criticalCount">0 سجل</span>
+              <button class="btn-sm btn-print no-print" onclick="printReport('critical')">🖨️ طباعة</button>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table id="criticalTable">
+              <thead>
+                <tr>
+                  <th>رقم التشغيلة</th>
+                  <th>الصنف</th>
+                  <th>التاريخ</th>
+                  <th>سكروز (منتج)</th>
+                  <th>HMF (منتج)</th>
+                  <th>انحراف سكروز</th>
+                  <th>انحراف HMF</th>
+                  <th>الحالة</th>
+                </tr>
+              </thead>
+              <tbody id="criticalTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="print-footer">
+          <span id="printFooterDate"></span>
+          <span>نظام تحليل جودة العسل</span>
+        </div>
+      </section>
+
+      <!-- ===== CONTROL SECTION ===== -->
+      <section class="section" id="sec-control">
+        <div class="section-title">📉 مراقبة الانحراف الحرج</div>
+
+        <div class="dev-grid">
+          <div class="dev-card">
+            <h3>🔬 السكروز (Sucrose)</h3>
+            <p>تحديد حدود التحكم الحرجة ومراقبة الانحراف</p>
+            <div class="threshold-controls">
+              <div class="threshold-item">
+                <label>الحد الأعلى الحرج (UCL)</label>
+                <input type="number" id="sucUCL" value="12" step="0.1" onchange="updateControl()">
+              </div>
+              <div class="threshold-item">
+                <label>الحد الأدنى الحرج (LCL)</label>
+                <input type="number" id="sucLCL" value="0" step="0.1" onchange="updateControl()">
+              </div>
+              <div class="threshold-item">
+                <label>القيمة المستهدفة</label>
+                <input type="number" id="sucMean" value="6" step="0.1" onchange="updateControl()">
+              </div>
+            </div>
+            <div class="gauge-container" id="sucGauges"></div>
+            <div class="chart-wrap tall" onclick="showChartDetail('sucControlChart', 'مراقبة السكروز SPC')" style="cursor:zoom-in"><canvas id="sucControlChart"></canvas></div>
+          </div>
+          <div class="dev-card">
+            <h3>🌡️ HMF (Hydroxymethylfurfural)</h3>
+            <p>الحد الأعلى المسموح به وفق المعايير الدولية</p>
+            <div class="threshold-controls">
+              <div class="threshold-item">
+                <label>الحد الأعلى الحرج (UCL)</label>
+                <input type="number" id="hmfUCL" value="80" step="1" onchange="updateControl()">
+              </div>
+              <div class="threshold-item">
+                <label>الحد الأدنى الحرج (LCL)</label>
+                <input type="number" id="hmfLCL" value="0" step="1" onchange="updateControl()">
+              </div>
+              <div class="threshold-item">
+                <label>القيمة المستهدفة</label>
+                <input type="number" id="hmfMean" value="40" step="1" onchange="updateControl()">
+              </div>
+            </div>
+            <div class="gauge-container" id="hmfGauges"></div>
+            <div class="chart-wrap tall" onclick="showChartDetail('hmfControlChart', 'مراقبة HMF SPC')" style="cursor:zoom-in"><canvas id="hmfControlChart"></canvas></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== SEARCH SECTION ===== -->
+      <section class="section" id="sec-search">
+        <div class="section-title">🔍 البحث الذكي</div>
+        <div class="search-section">
+          <div class="search-bar-wrap">
+            <input type="text" class="search-input-big" id="searchInput"
+              placeholder="ابحث برقم التشغيلة، التاريخ، أو اسم الصنف..." oninput="liveSearch(this.value)">
+            <button class="search-btn" onclick="performSearch()">🔍 بحث</button>
+          </div>
+          <div class="search-tags">
+            <span class="search-tag" onclick="quickSearch('عسل نوارة البرسيم')">🌸 نوارة البرسيم</span>
+            <span class="search-tag" onclick="quickSearch('عسل زهور الربيع')">🌺 زهور الربيع</span>
+            <span class="search-tag" onclick="quickSearch('عسل سدر')">🌿 السدر</span>
+            <span class="search-tag" onclick="quickSearch('عسل أبيض')">⬜ أبيض روسي</span>
+            <span class="search-tag" onclick="quickSearch('عسل نحل جبلى')">⛰️ نحل جبلي</span>
+          </div>
+          <div class="search-results-info" id="searchInfo">اكتب للبحث في <span id="totalRecordsCount">0</span> سجل</div>
+          <div id="searchResults"></div>
+        </div>
+      </section>
+
+      <!-- ===== TABLE SECTION ===== -->
+      <section class="section" id="sec-table">
+        <div class="section-title">📋 جدول البيانات الكامل</div>
+        <div class="table-card">
+          <div class="table-header">
+            <h3>📋 جميع التشغيلات</h3>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <input type="text" class="filter-input" id="tableSearch" placeholder="بحث سريع..." style="width:180px"
+                oninput="filterTable(this.value)">
+              <span class="badge info" id="tableCount">0 سجل</span>
+              <button class="btn-sm btn-print no-print" onclick="printReport('table')">🖨️ طباعة</button>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table id="mainTable">
+              <thead>
+                <tr>
+                  <th>الإجراءات</th>
+                  <th>التاريخ</th>
+                  <th>رقم التشغيلة</th>
+                  <th>الصنف</th>
+                  <th>سكروز خلط</th>
+                  <th>HMF خلط</th>
+                  <th>سكروز تنقية</th>
+                  <th>HMF تنقية</th>
+                  <th>سكروز منتج</th>
+                  <th>HMF منتج</th>
+                  <th>انحراف سكروز</th>
+                  <th>انحراف HMF</th>
+                  <th>الوزن</th>
+                  <th>O-Rotation</th>
+                  <th>حالة السكروز</th>
+                  <th>حالة HMF</th>
+                </tr>
+              </thead>
+              <tbody id="mainTableBody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="tablePagination"></div>
+        </div>
+      </section>
+
+      <!-- ===== ENTRY SECTION ===== -->
+      <section class="section" id="sec-entry">
+        <div class="section-title">➕ إدخال بيانات تشغيلة جديدة</div>
+
+        <div class="entry-form">
+          <h3>📝 بيانات التشغيلة</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>التاريخ *</label>
+              <input type="date" id="entDate" required>
+            </div>
+            <div class="form-group">
+              <label>رقم التشغيلة *</label>
+              <input type="text" id="entBatch" placeholder="مثال: 1500-1" required>
+            </div>
+            <div class="form-group">
+              <label>الصنف *</label>
+              <select id="entType">
+                <option value="">اختر الصنف</option>
+                <option value="عسل نوارة البرسيم">عسل نوارة البرسيم</option>
+                <option value="عسل زهور الربيع">عسل زهور الربيع</option>
+                <option value="عسل سدر حضرمي">عسل سدر حضرمي</option>
+                <option value="عسل سدر جبلي حضرمي">عسل سدر جبلي حضرمي</option>
+                <option value="عسل نحل جبلى حضرمى">عسل نحل جبلى حضرمى</option>
+                <option value="عسل أبيض روسي">عسل أبيض روسي</option>
+                <option value="صنف جديد">صنف جديد (أدخله يدوياً)</option>
+              </select>
+            </div>
+            <div class="form-group" id="newTypeGroup" style="display:none">
+              <label>اسم الصنف الجديد</label>
+              <input type="text" id="entNewType" placeholder="أدخل اسم الصنف">
+            </div>
+            <div class="form-group">
+              <label>سكروز الخلط</label>
+              <input type="number" id="entMixSuc" step="0.01" placeholder="0.00">
+            </div>
+            <div class="form-group">
+              <label>HMF الخلط</label>
+              <input type="number" id="entMixHMF" step="0.01" placeholder="0.00">
+            </div>
+            <div class="form-group">
+              <label>سكروز التنقية</label>
+              <input type="number" id="entPurSuc" step="0.01" placeholder="0.00">
+            </div>
+            <div class="form-group">
+              <label>HMF التنقية</label>
+              <input type="number" id="entPurHMF" step="0.01" placeholder="0.00">
+            </div>
+            <div class="form-group">
+              <label>سكروز المنتج التام *</label>
+              <input type="number" id="entFinSuc" step="0.01" placeholder="0.00" required oninput="checkEntryLive()">
+            </div>
+            <div class="form-group">
+              <label>HMF المنتج التام *</label>
+              <input type="number" id="entFinHMF" step="0.01" placeholder="0.00" required oninput="checkEntryLive()">
+            </div>
+            <div class="form-group">
+              <label>O-Rotation</label>
+              <input type="text" id="entRotation" placeholder="+0.0">
+            </div>
+            <div class="form-group">
+              <label>الوزن</label>
+              <input type="text" id="entWeight" placeholder="800 gm">
+            </div>
+          </div>
+
+          <div id="liveCheck" class="hidden alert-banner" style="margin-bottom:14px"></div>
+
+          <div class="form-actions">
+            <button class="save-btn" onclick="saveEntry()">💾 حفظ التشغيلة</button>
+            <button class="clear-form-btn" onclick="clearForm()">🗑️ مسح البيانات</button>
+          </div>
+        </div>
+
+        <div class="table-card" id="recentEntries">
+          <div class="table-header">
+            <h3>📋 التشغيلات المُضافة حديثاً</h3>
+            <span class="badge info" id="recentCount">0 سجل</span>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>التاريخ</th>
+                  <th>رقم التشغيلة</th>
+                  <th>الصنف</th>
+                  <th>سكروز المنتج</th>
+                  <th>HMF المنتج</th>
+                  <th>الحالة</th>
+                </tr>
+              </thead>
+              <tbody id="recentTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== REPORTS SECTION ===== -->
+      <section class="section" id="sec-reports">
+        <div class="section-title">📄 التقارير والطباعة</div>
+
+        <!-- Report Filters -->
+        <div class="report-filters">
+          <h3>🔍 تصفية البيانات للتقرير</h3>
+          <div class="filters-bar" style="margin-bottom:0; border:none; padding:0;">
+            <div class="filter-group">
+              <label>الصنف</label>
+              <select class="filter-select" id="rptFilterType">
+                <option value="">جميع الأصناف</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>من تاريخ</label>
+              <input type="date" class="filter-input" id="rptDateFrom">
+            </div>
+            <div class="filter-group">
+              <label>إلى تاريخ</label>
+              <input type="date" class="filter-input" id="rptDateTo">
+            </div>
+            <div class="filter-group">
+              <label>رقم التشغيلة</label>
+              <input type="text" class="filter-input" id="rptBatch" placeholder="مثال: 1439">
+            </div>
+            <button class="apply-btn" onclick="applyReportFilter()">تطبيق</button>
+            <button class="reset-btn" onclick="resetReportFilter()">مسح</button>
+          </div>
+          <div style="margin-top:12px;font-size:12px;color:var(--text-muted)">
+            البيانات المحددة: <span id="rptCount" style="color:var(--gold-light);font-weight:700;">0</span> سجل
+          </div>
+        </div>
+
+        <!-- Quick Print Cards -->
+        <div class="reports-grid">
+          <div class="report-card" onclick="printReport('rpt_full')">
+            <div class="rpt-icon">📊</div>
+            <h4>تقرير شامل</h4>
+            <p>إحصاءات كاملة + الجدول + السجلات الحرجة</p>
+          </div>
+          <div class="report-card" onclick="printReport('rpt_table')">
+            <div class="rpt-icon">📋</div>
+            <h4>تقرير جدول البيانات</h4>
+            <p>طباعة جدول التشغيلات المصفّاة</p>
+          </div>
+          <div class="report-card" onclick="printReport('rpt_critical')">
+            <div class="rpt-icon">⚠️</div>
+            <h4>تقرير السجلات الحرجة</h4>
+            <p>التشغيلات خارج حدود الجودة فقط</p>
+          </div>
+          <div class="report-card" onclick="printReport('rpt_stats')">
+            <div class="rpt-icon">📈</div>
+            <h4>تقرير الإحصاءات</h4>
+            <p>ملخص الأرقام والمؤشرات</p>
+          </div>
+        </div>
+
+        <!-- Export Section -->
+        <div class="settings-card" style="margin-bottom:20px;">
+          <h3>📤 تصدير البيانات</h3>
+          <p>تصدير البيانات المحددة بالفلتر أعلاه إلى الصيغة المطلوبة</p>
+          <div class="export-btns">
+            <button class="btn-export btn-xlsx" onclick="exportData('xlsx')">📊 Excel (.xlsx)</button>
+            <button class="btn-export btn-csv" onclick="exportData('csv')">📃 CSV</button>
+            <button class="btn-export btn-json" onclick="exportData('json')">🗂️ JSON</button>
+          </div>
+        </div>
+
+        <!-- Preview Table -->
+        <div class="table-card">
+          <div class="table-header">
+            <h3>👁️ معاينة البيانات المصفّاة</h3>
+            <span class="badge info" id="rptTableCount">0 سجل</span>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>التاريخ</th>
+                  <th>رقم التشغيلة</th>
+                  <th>الصنف</th>
+                  <th>سكروز منتج</th>
+                  <th>HMF منتج</th>
+                  <th>انحراف سكروز</th>
+                  <th>انحراف HMF</th>
+                  <th>الوزن</th>
+                  <th>O-Rotation</th>
+                  <th>الحالة</th>
+                </tr>
+              </thead>
+              <tbody id="rptTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== SETTINGS SECTION ===== -->
+      <section class="section" id="sec-settings">
+        <div class="section-title">⚙️ الإعدادات</div>
+
+        <div class="settings-grid">
+          <!-- Company Identity -->
+          <div class="settings-card">
+            <h3>🏢 هوية الشركة</h3>
+            <p>اسم الشركة وشعارها يظهران في التقارير المطبوعة والرأسية</p>
+            <label style="font-size:11px;color:var(--text-muted);font-weight:600;">اسم الشركة</label>
+            <input type="text" class="settings-input" id="settCompanyName" placeholder="اسم شركتك أو مختبرك" value="">
+            <div class="logo-upload-area" onclick="document.getElementById('logoFileInput').click()">
+              <div id="logoPreview">
+                <div class="placeholder">🖼️</div>
+                <p>انقر لرفع شعار الشركة</p>
+                <p style="font-size:10px;margin-top:4px;">PNG, JPG, SVG (أقل من 2MB)</p>
+              </div>
+              <input type="file" id="logoFileInput" accept="image/*" style="display:none" onchange="uploadLogo(this)">
+            </div>
+            <button class="primary-btn" onclick="saveCompanySettings()">💾 حفظ الإعدادات</button>
+          </div>
+
+          <!-- Data Management -->
+          <div class="settings-card">
+            <h3>💾 إدارة البيانات</h3>
+            <p>حفظ البيانات واسترجاعها من ذاكرة الجهاز (LocalStorage)</p>
+
+            <div class="info-row">
+              <span class="lbl">إجمالي السجلات المحفوظة</span>
+              <span class="val" id="sett_totalRecords">0</span>
+            </div>
+            <div class="info-row">
+              <span class="lbl">آخر حفظ</span>
+              <span class="val" id="sett_lastSave">—</span>
+            </div>
+            <div class="info-row">
+              <span class="lbl">مصدر البيانات</span>
+              <span class="val" id="sett_dataSource">البيانات الافتراضية</span>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+              <button class="primary-btn" style="flex:1;width:auto;" onclick="saveDataNow()">💾 حفظ الآن</button>
+              <button class="clear-form-btn" style="flex:1;" onclick="loadFromStorage()">🔄 تحميل المحفوظ</button>
+            </div>
+          </div>
+
+          <!-- Import/Export -->
+          <div class="settings-card">
+            <h3>📤 استيراد وتصدير</h3>
+            <p>استيراد البيانات من ملفات Excel أو تصديرها</p>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <label class="primary-btn" style="cursor:pointer;text-align:center;">
+                📂 استيراد من Excel
+                <input type="file" accept=".xlsx,.xls" style="display:none" onchange="loadExcelFile(this)">
+              </label>
+              <button class="btn-export btn-xlsx" onclick="exportData('xlsx')" style="padding:11px;">📊 تصدير Excel
+                (.xlsx)</button>
+              <button class="btn-export btn-csv" onclick="exportData('csv')" style="padding:11px;">📃 تصدير CSV</button>
+              <button class="btn-export btn-json" onclick="exportData('json')" style="padding:11px;">🗂️ تصدير
+                JSON</button>
+            </div>
+          </div>
+
+          <!-- Danger Zone -->
+          <div class="settings-card danger-zone">
+            <h3>🗑️ منطقة الخطر</h3>
+            <p>حذف جميع البيانات نهائياً من النظام. هذه العملية لا يمكن التراجع عنها.</p>
+            <div style="margin-bottom:12px;">
+              <label style="font-size:11px;color:var(--danger);font-weight:600;display:block;margin-bottom:6px;">
+                اكتب كلمة سر الحذف للتأكيد:
+              </label>
+              <input type="password" class="settings-input" id="deletePassword" placeholder="••••• كلمة المرور"
+                style="margin-bottom:8px;">
+              <p style="font-size:10px;color:var(--text-muted);margin-bottom:0;">الكلمة الصحيحة مطلوبة لإتمام الحذف</p>
+            </div>
+            <button class="danger-btn" onclick="deleteAllData()">🗑️ حذف جميع البيانات نهائياً</button>
+          </div>
+
+          <!-- Threshold Management -->
+          <div class="settings-card" id="thresholdSettingsCard">
+            <h3>⚙️ إدارة الحدود الحرجة</h3>
+            <p>تعديل الحدود الحرجة للسكروز و HMF وتطبيقها على البيانات</p>
+            <div style="margin-bottom:16px;">
+              <div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:10px;">🔬 السكروز (Sucrose)</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;">
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <label style="font-size:10px;color:var(--text-muted);font-weight:600;">UCL (الأعلى)</label>
+                  <input type="number" id="sett_sucUCL" step="0.1" class="settings-input" style="margin-bottom:0;" placeholder="12">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <label style="font-size:10px;color:var(--text-muted);font-weight:600;">LCL (الأدنى)</label>
+                  <input type="number" id="sett_sucLCL" step="0.1" class="settings-input" style="margin-bottom:0;" placeholder="0">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <label style="font-size:10px;color:var(--text-muted);font-weight:600;">المتوسط المستهدف</label>
+                  <input type="number" id="sett_sucMean" step="0.1" class="settings-input" style="margin-bottom:0;" placeholder="6">
+                </div>
+              </div>
+              <div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:10px;">🌡️ HMF</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <label style="font-size:10px;color:var(--text-muted);font-weight:600;">UCL (الأعلى)</label>
+                  <input type="number" id="sett_hmfUCL" step="1" class="settings-input" style="margin-bottom:0;" placeholder="80">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <label style="font-size:10px;color:var(--text-muted);font-weight:600;">LCL (الأدنى)</label>
+                  <input type="number" id="sett_hmfLCL" step="1" class="settings-input" style="margin-bottom:0;" placeholder="0">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <label style="font-size:10px;color:var(--text-muted);font-weight:600;">المتوسط المستهدف</label>
+                  <input type="number" id="sett_hmfMean" step="1" class="settings-input" style="margin-bottom:0;" placeholder="40">
+                </div>
+              </div>
+            </div>
+            <div style="margin-bottom:14px;">
+              <div style="font-size:11px;color:var(--text-muted);font-weight:600;margin-bottom:8px;">📌 تطبيق الحدود الجديدة على:</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="apply-option-btn selected" id="applyAll_btn" onclick="selectApplyOption('all')">📊 جميع البيانات</button>
+                <button class="apply-option-btn" id="applyNew_btn" onclick="selectApplyOption('new')">🆕 البيانات الجديدة فقط</button>
+              </div>
+            </div>
+            <button class="primary-btn" onclick="saveThresholds()">💾 حفظ وتطبيق الحدود</button>
+          </div>
+
+          <!-- System Info -->
+          <div class="settings-card">
+            <h3>ℹ️ معلومات النظام</h3>
+            <p>معلومات عن الإصدار والنظام</p>
+            <div class="info-row">
+              <span class="lbl">اسم النظام</span>
+              <span class="val">نظام تحليل جودة العسل</span>
+            </div>
+            <div class="info-row">
+              <span class="lbl">الإصدار</span>
+              <span class="val">v2.0 Enhanced</span>
+            </div>
+            <div class="info-row">
+              <span class="lbl">التاريخ الحالي</span>
+              <span class="val" id="sett_today">—</span>
+            </div>
+            <div class="info-row">
+              <span class="lbl">المتصفح</span>
+              <span class="val" id="sett_browser">—</span>
+            </div>
+            <div class="info-row">
+              <span class="lbl">حجم البيانات المحفوظة</span>
+              <span class="val" id="sett_storageSize">—</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Hidden print area -->
+  <div id="printArea" style="display:none;"></div>
+
+  <script>
+    // ==================== DATA ====================
+    let allData = [];
+    let filteredData = [];
+    let reportData = [];
+    let newEntries = [];
+    let charts = {};
+    let currentPage = 1;
+    const PAGE_SIZE = 30;
+    let currentViewIndex = -1;
+    let logoBase64 = '';
+    let companyName = 'نظام تحليل جودة العسل';
+
+    const THRESHOLDS = {
+      suc: { ucl: 12, lcl: 0, mean: 6 },
+      hmf: { ucl: 80, lcl: 0, mean: 40 }
+    };
+
+    const TYPE_COLORS = {
+      'عسل نوارة البرسيم': '#C9A84C',
+      'عسل زهور الربيع': '#E8A030',
+      'عسل زهور الربيع ': '#E8A030',
+      'عسل سدر حضرمي': '#4CAF7A',
+      'عسل سدر جبلي حضرمي': '#2D8F5A',
+      'عسل نحل جبلى حضرمى': '#5B9BD5',
+      'عسل أبيض روسي': '#A0AEC0',
+      'عسل نحل سدر جبلي حضرمي': '#3A7D9E',
+    };
+
+    const COLOR_PALETTE = ['#C9A84C', '#E8A030', '#4CAF7A', '#5B9BD5', '#E05252', '#A78BFA', '#F472B6', '#34D399'];
+
+    // ==================== EMBEDDED DATA ====================
+    const RAW_DATA = [
+      { date: 46020, batch: "1439-2", type: "عسل نوارة البرسيم", mixSuc: 7.4646, mixHMF: 29.94, purSuc: 7.163, purHMF: 21.7065, finSuc: 7.4646, finHMF: 29.94, devSuc: 0.3016, devHMF: 8.2335, rotation: "+1.3", weight: "800 gm", batchNum: "1439-2" },
+      { date: 46021, batch: "1439-3", type: "عسل نوارة البرسيم", mixSuc: 7.8416, mixHMF: 23.5029, purSuc: 7.8416, purHMF: 25.8981, finSuc: 7.8416, finHMF: 23.5029, devSuc: 0, devHMF: 2.3952, rotation: "+2.0", weight: "800 gm", batchNum: "1439-3" },
+      { date: 46021, batch: "1439-4", type: "عسل نوارة البرسيم", mixSuc: 7.6154, mixHMF: 23.952, purSuc: 8.0678, purHMF: 30.0897, finSuc: 7.6154, finHMF: 23.952, devSuc: 0.4524, devHMF: 6.1377, rotation: "+3.3", weight: "800 gm", batchNum: "1439-4" },
+      { date: 46022, batch: "1440-1", type: "عسل نوارة البرسيم", mixSuc: 7.8416, mixHMF: 16.9161, purSuc: 8.7464, purHMF: 17.6646, finSuc: 7.8416, finHMF: 16.9161, devSuc: 0.9048, devHMF: 0.7485, rotation: "+3.0", weight: "800 gm", batchNum: "1440-1" },
+      { date: 46022, batch: "1440-2", type: "عسل نوارة البرسيم", mixSuc: 8.294, mixHMF: 20.2095, purSuc: 8.2186, purHMF: 21.2574, finSuc: 8.294, finHMF: 20.2095, devSuc: 0.0754, devHMF: 1.0479, rotation: "+3.2", weight: "800 gm", batchNum: "1440-2" },
+      { date: 46022, batch: "1440-3", type: "عسل نوارة البرسيم", mixSuc: 9.5758, mixHMF: 13.9221, purSuc: 9.1988, purHMF: 16.3173, finSuc: 9.5758, finHMF: 13.9221, devSuc: 0.377, devHMF: 2.3952, rotation: "+4.5", weight: "800 gm", batchNum: "1440-3" },
+      { date: 46022, batch: "1440-4", type: "عسل نوارة البرسيم", mixSuc: 8.671, mixHMF: 14.97, purSuc: 9.1234, purHMF: 13.7724, finSuc: 8.671, finHMF: 14.97, devSuc: 0.4524, devHMF: 1.1976, rotation: "+4.5", weight: "800 gm", batchNum: "1440-4" },
+      { date: 46021, batch: "1441-1", type: "عسل زهور الربيع", mixSuc: 5.655, mixHMF: 59.88, purSuc: 5.655, purHMF: 56.2872, finSuc: 5.655, finHMF: 59.88, devSuc: 0, devHMF: 3.5928, rotation: "+0.1", weight: "125 gm", batchNum: "1441-1" },
+      { date: 46022, batch: "1441-2", type: "عسل زهور الربيع", mixSuc: 5.8058, mixHMF: 53.1435, purSuc: 5.8812, purHMF: 43.1136, finSuc: 5.8058, finHMF: 53.1435, devSuc: 0.0754, devHMF: 10.0299, rotation: "-0.1", weight: "800 gm", batchNum: "1441-2" },
+      { date: 46025, batch: "1441-3", type: "عسل زهور الربيع", mixSuc: 4.9764, mixHMF: 72.4548, purSuc: 4.8256, purHMF: 56.5866, finSuc: 4.9764, finHMF: 72.4548, devSuc: 0.1508, devHMF: 15.8682, rotation: "-1.4", weight: "800 gm", batchNum: "1441-3" },
+      { date: 46026, batch: "1441-4", type: "عسل زهور الربيع", mixSuc: 4.8256, mixHMF: 46.407, purSuc: 4.9764, purHMF: 44.91, finSuc: 4.8256, finHMF: 46.407, devSuc: 0.1508, devHMF: 1.497, rotation: "-1.2", weight: "800 gm", batchNum: "1441-4" },
+      { date: 46024, batch: "1442-1", type: "عسل نوارة البرسيم", mixSuc: 8.8972, mixHMF: 22.9041, purSuc: 9.7266, purHMF: 17.8143, finSuc: 8.8972, finHMF: 22.9041, devSuc: 0.8294, devHMF: 5.0898, rotation: "+3.2", weight: "800 gm", batchNum: "1442-1" },
+      { date: 46024, batch: "1442-2", type: "عسل نوارة البرسيم", mixSuc: 7.0876, mixHMF: 21.7065, purSuc: 6.786, purHMF: 21.1077, finSuc: 7.0876, finHMF: 21.7065, devSuc: 0.3016, devHMF: 0.5988, rotation: "+1.0", weight: "800 gm", batchNum: "1442-2" },
+      { date: 46025, batch: "1442-3", type: "عسل نوارة البرسيم", mixSuc: 2.262, mixHMF: 24.7005, purSuc: 7.163, purHMF: 19.7604, finSuc: 2.262, finHMF: 24.7005, devSuc: 4.901, devHMF: 4.9401, rotation: "+1.0", weight: "800 gm", batchNum: "1442-3" },
+      { date: 46027, batch: "1442-4", type: "عسل نوارة البرسيم", mixSuc: 6.9368, mixHMF: 19.461, purSuc: 7.3892, purHMF: 15.5688, finSuc: 6.9368, finHMF: 19.461, devSuc: 0.4524, devHMF: 3.8922, rotation: "+0.8", weight: "800 gm", batchNum: "1442-4" },
+      { date: 46026, batch: "1443-1", type: "عسل سدر حضرمي", mixSuc: 5.0518, mixHMF: 17.964, purSuc: 5.2026, purHMF: 18.4131, finSuc: 5.0518, finHMF: 17.964, devSuc: 0.1508, devHMF: 0.4491, rotation: "+1.5", weight: "2.200 kg", batchNum: "1443-1" },
+      { date: 46386, batch: "1444-1", type: "عسل نوارة البرسيم", mixSuc: 7.4646, mixHMF: 24.9999, purSuc: 7.917, purHMF: 21.8562, finSuc: 7.4646, finHMF: 24.9999, devSuc: 0.4524, devHMF: 3.1437, rotation: "+1.3", weight: "800 gm", batchNum: "1444-1" },
+      { date: 46027, batch: "1444-2", type: "عسل نوارة البرسيم", mixSuc: 6.409, mixHMF: 20.5089, purSuc: 8.0678, purHMF: 20.2095, finSuc: 6.409, finHMF: 20.5089, devSuc: 1.6588, devHMF: 0.2994, rotation: "+2.3", weight: "800 gm", batchNum: "1444-2" },
+      { date: 46027, batch: "1444-3", type: "عسل نوارة البرسيم", mixSuc: 5.278, mixHMF: 21.4071, purSuc: 6.032, purHMF: 23.2035, finSuc: 5.278, finHMF: 21.4071, devSuc: 0.754, devHMF: 1.7964, rotation: "+0.4", weight: "800 gm", batchNum: "1444-3" },
+      { date: 46027, batch: "1444-4", type: "عسل نوارة البرسيم", mixSuc: 4.524, mixHMF: 28.443, purSuc: 5.278, purHMF: 29.94, finSuc: 4.524, finHMF: 28.443, devSuc: 0.754, devHMF: 1.497, rotation: "+0.2", weight: "800 gm", batchNum: "1444-4" },
+      { date: 46386, batch: "1445-1", type: "عسل نوارة البرسيم", mixSuc: 7.0122, mixHMF: 35.3292, purSuc: 7.0876, purHMF: 26.946, finSuc: 7.0122, finHMF: 35.3292, devSuc: 0.0754, devHMF: 8.3832, rotation: "+0.3", weight: "800 gm", batchNum: "1445-1" },
+      { date: 46032, batch: "1445-2", type: "عسل نوارة البرسيم", mixSuc: 6.6352, mixHMF: 37.1256, purSuc: 6.7106, purHMF: 41.916, finSuc: 6.6352, finHMF: 37.1256, devSuc: 0.0754, devHMF: 4.7904, rotation: "+0.2", weight: "800 gm", batchNum: "1445-2" },
+      { date: 46030, batch: "1445-3", type: "عسل نوارة البرسيم", mixSuc: 8.4448, mixHMF: 21.4071, purSuc: 5.4288, purHMF: 24.5508, finSuc: 8.4448, finHMF: 21.4071, devSuc: 3.016, devHMF: 3.1437, rotation: "+1.4", weight: "800 gm", batchNum: "1445-3" },
+      { date: 46030, batch: "1445-4", type: "عسل نوارة البرسيم", mixSuc: 6.786, mixHMF: 19.461, purSuc: 6.8614, purHMF: 21.2574, finSuc: 6.786, finHMF: 19.461, devSuc: 0.0754, devHMF: 1.7964, rotation: "+0.2", weight: "800 gm", batchNum: "1445-4" },
+      { date: 46032, batch: "1446-1", type: "عسل نوارة البرسيم", mixSuc: 4.7502, mixHMF: 29.94, purSuc: 5.1272, purHMF: 26.1975, finSuc: 4.7502, finHMF: 29.94, devSuc: 0.377, devHMF: 3.7425, rotation: "-0.5", weight: "800 gm", batchNum: "1446-1" },
+      { date: 46032, batch: "1446-2", type: "عسل نوارة البرسيم", mixSuc: 4.5994, mixHMF: 28.1436, purSuc: 4.2978, purHMF: 27.2454, finSuc: 4.5994, finHMF: 28.1436, devSuc: 0.3016, devHMF: 0.8982, rotation: "-0.3", weight: "800 gm", batchNum: "1446-2" },
+      { date: 46032, batch: "1446-3", type: "عسل نوارة البرسيم", mixSuc: 4.6748, mixHMF: 28.443, purSuc: 4.4486, purHMF: 26.3472, finSuc: 4.6748, finHMF: 28.443, devSuc: 0.2262, devHMF: 2.0958, rotation: "-0.4", weight: "800 gm", batchNum: "1446-3" },
+      { date: 46032, batch: "1446-4", type: "عسل نوارة البرسيم", mixSuc: 4.3732, mixHMF: 35.928, purSuc: 3.9208, purHMF: 35.3292, finSuc: 4.3732, finHMF: 35.928, devSuc: 0.4524, devHMF: 0.5988, rotation: "-1.2", weight: "800 gm", batchNum: "1446-4" },
+      { date: 46030, batch: "1447-1", type: "عسل زهور الربيع", mixSuc: 4.6748, mixHMF: 72.3051, purSuc: 5.7304, purHMF: 75.2991, finSuc: 4.6748, finHMF: 72.3051, devSuc: 1.0556, devHMF: 2.994, rotation: "-0.2", weight: "800 gm", batchNum: "1447-1" },
+      { date: 46032, batch: "1447-2", type: "عسل زهور الربيع", mixSuc: 4.4486, mixHMF: 52.9938, purSuc: 3.6192, purHMF: 56.4369, finSuc: 4.4486, finHMF: 52.9938, devSuc: 0.8294, devHMF: 3.4431, rotation: "-0.7", weight: "800 gm", batchNum: "1447-2" },
+      { date: 46034, batch: "1447-3", type: "عسل زهور الربيع", mixSuc: 5.278, mixHMF: 64.371, purSuc: 5.4288, purHMF: 63.6225, finSuc: 5.278, finHMF: 64.371, devSuc: 0.1508, devHMF: 0.7485, rotation: "-0.2", weight: "800 gm", batchNum: "1447-3" },
+      { date: 46035, batch: "1447-4", type: "عسل زهور الربيع", mixSuc: 6.7106, mixHMF: 73.353, purSuc: 5.278, purHMF: 66.3171, finSuc: 6.7106, finHMF: 73.353, devSuc: 1.4326, devHMF: 7.0359, rotation: "+1.3", weight: "450 gm", batchNum: "1447-4" },
+      { date: 46035, batch: "1449-1", type: "عسل زهور الربيع", mixSuc: 4.9764, mixHMF: 74.9997, purSuc: 4.147, purHMF: 73.5027, finSuc: 4.9764, finHMF: 74.9997, devSuc: 0.8294, devHMF: 1.497, rotation: "-4.0", weight: "450 gm", batchNum: "1449-1" },
+      { date: 46039, batch: "1449-2", type: "عسل زهور الربيع", mixSuc: 5.7304, mixHMF: 63.1734, purSuc: 4.3732, purHMF: 62.874, finSuc: 5.7304, finHMF: 63.1734, devSuc: 1.3572, devHMF: 0.2994, rotation: "-3.2", weight: "450 gm", batchNum: "1449-2" },
+      { date: 46047, batch: "1449-3", type: "عسل زهور الربيع", mixSuc: 4.7502, mixHMF: 80.5386, purSuc: 5.354, purHMF: 84.7302, finSuc: 4.7502, finHMF: 80.5386, devSuc: 0.6032, devHMF: 4.1916, rotation: "-1.1", weight: "250 gm", batchNum: "1449-3" },
+      { date: 46047, batch: "1449-4", type: "عسل زهور الربيع", mixSuc: 5.655, mixHMF: 61.5267, purSuc: 6.1074, purHMF: 65.5686, finSuc: 5.655, finHMF: 61.5267, devSuc: 0.4524, devHMF: 4.0419, rotation: "+0.7", weight: "250 gm", batchNum: "1449-4" },
+      { date: 46035, batch: "1450-1", type: "عسل نوارة البرسيم", mixSuc: 5.8812, mixHMF: 26.1975, purSuc: 6.1074, purHMF: 24.7005, finSuc: 5.8812, finHMF: 26.1975, devSuc: 0.2262, devHMF: 1.497, rotation: "+0.2", weight: "450 gm", batchNum: "1450-1" },
+      { date: 46035, batch: "1450-2", type: "عسل نوارة البرسيم", mixSuc: 6.032, mixHMF: 32.1855, purSuc: 6.1074, purHMF: 31.7364, finSuc: 6.032, finHMF: 32.1855, devSuc: 0.0754, devHMF: 0.4491, rotation: "+0.2", weight: "450 gm", batchNum: "1450-2" },
+      { date: 46035, batch: "1450-3", type: "عسل نوارة البرسيم", mixSuc: 6.6352, mixHMF: 27.6945, purSuc: 6.409, purHMF: 25.1496, finSuc: 6.6352, finHMF: 27.6945, devSuc: 0.2262, devHMF: 2.5449, rotation: "+1.2", weight: "27.0 gm", batchNum: "1450-3" },
+      { date: 46036, batch: "1450-4", type: "عسل نوارة البرسيم", mixSuc: 6.4844, mixHMF: 27.8442, purSuc: 6.4844, purHMF: 26.946, finSuc: 6.4844, finHMF: 27.8442, devSuc: 0, devHMF: 0.8982, rotation: "-0.6", weight: "450 gm", batchNum: "1450-4" },
+      { date: 46074, batch: "1461-1", type: "عسل نحل جبلى حضرمى", mixSuc: 4.0716, mixHMF: 13.473, purSuc: 4.524, purHMF: 16.1676, finSuc: 4.0716, finHMF: 13.473, devSuc: 0.4524, devHMF: 2.6946, rotation: "+3.8", weight: "1.0 kg", batchNum: "1461-1" },
+      { date: 46074, batch: "1461-2", type: "عسل نحل جبلى حضرمى", mixSuc: 4.147, mixHMF: 14.97, purSuc: 4.0716, purHMF: 7.485, finSuc: 4.147, finHMF: 14.97, devSuc: 0.0754, devHMF: 7.485, rotation: "+3.5", weight: "2.200 kg", batchNum: "1461-2" },
+      { date: 46084, batch: "1475-1", type: "عسل أبيض روسي", mixSuc: 3.016, mixHMF: 11.976, purSuc: 3.016, purHMF: 11.976, finSuc: 3.016, finHMF: 11.976, devSuc: 0, devHMF: 0, rotation: "-16.0", weight: "500 gm", batchNum: "1475-1" },
+      { date: 46091, batch: "1477-1", type: "عسل أبيض روسي", mixSuc: 3.016, mixHMF: 11.976, purSuc: 3.016, purHMF: 11.976, finSuc: 3.016, finHMF: 11.976, devSuc: 0, devHMF: 0, rotation: "-16.0", weight: "500 gm", batchNum: "1477-1" },
+      { date: 46091, batch: "1478-1", type: "عسل سدر جبلي حضرمي", mixSuc: 5.5796, mixHMF: 16.467, purSuc: 3.77, purHMF: 14.97, finSuc: 5.5796, finHMF: 16.467, devSuc: 1.8096, devHMF: 1.497, rotation: "+3.2", weight: "180 gm", batchNum: "1478-1" },
+      { date: 46106, batch: "1486-1", type: "عسل زهور الربيع", mixSuc: 11.8378, mixHMF: 29.94, purSuc: 11.9886, purHMF: 24.7005, finSuc: 11.8378, finHMF: 29.94, devSuc: 0.1508, devHMF: 5.2395, rotation: "+6.5", weight: "800 gm", batchNum: "1486-1" },
+      { date: 46106, batch: "1486-2", type: "عسل زهور الربيع", mixSuc: 12.2148, mixHMF: 30.5388, purSuc: 11.9132, purHMF: 23.2035, finSuc: 12.2148, finHMF: 30.5388, devSuc: 0.3016, devHMF: 7.3353, rotation: "+6.8", weight: "800 gm", batchNum: "1486-2" },
+      { date: 46128, batch: "1496-1", type: "عسل نحل سدر جبلي حضرمي", mixSuc: 4.0716, mixHMF: 7.485, purSuc: 4.0716, purHMF: 7.485, finSuc: 4.0716, finHMF: 7.485, devSuc: 0, devHMF: 0, rotation: "+0.6", weight: "2.200 kg", batchNum: "1496-1" },
+      { date: 46121, batch: "1498-1", type: "عسل زهور الربيع", mixSuc: 12.5164, mixHMF: 37.2753, purSuc: 11.8378, purHMF: 35.1795, finSuc: 12.5164, finHMF: 37.2753, devSuc: 0.6786, devHMF: 2.0958, rotation: "+7.6", weight: "250 gm", batchNum: "1498-1" },
+      { date: 46124, batch: "1498-2", type: "عسل زهور الربيع", mixSuc: 9.1234, mixHMF: 26.6466, purSuc: 10.2544, purHMF: 27.2454, finSuc: 9.1234, finHMF: 26.6466, devSuc: 1.131, devHMF: 0.5988, rotation: "+3.9", weight: "450 gm", batchNum: "1498-2" },
+      { date: 46124, batch: "1498-3", type: "عسل زهور الربيع", mixSuc: 7.8416, mixHMF: 34.5807, purSuc: 7.2384, purHMF: 34.431, finSuc: 7.8416, finHMF: 34.5807, devSuc: 0.6032, devHMF: 0.1497, rotation: "+2.2", weight: "450 gm", batchNum: "1498-3" },
+      { date: 46126, batch: "1498-4", type: "عسل زهور الربيع", mixSuc: 7.2384, mixHMF: 33.6825, purSuc: 5.7304, purHMF: 31.5867, finSuc: 7.2384, finHMF: 33.6825, devSuc: 1.508, devHMF: 2.0958, rotation: "+1.4", weight: "450 gm", batchNum: "1498-4" },
+      { date: 46137, batch: "1503-4", type: "عسل زهور الربيع", mixSuc: 11.4608, mixHMF: 30.2394, purSuc: 12.1394, purHMF: 59.5806, finSuc: 11.4608, finHMF: 30.2394, devSuc: 0.6786, devHMF: 29.3412, rotation: "+6.8", weight: "450 gm", batchNum: "1503-4" },
+      { date: 46137, batch: "1504-1", type: "عسل زهور الربيع", mixSuc: 11.31, mixHMF: 41.3172, purSuc: 12.5918, purHMF: 50.1495, finSuc: 11.31, finHMF: 41.3172, devSuc: 1.2818, devHMF: 8.8323, rotation: "+7.0", weight: "450 gm", batchNum: "1504-1" },
+      { date: 46139, batch: "1504-2", type: "عسل زهور الربيع", mixSuc: 10.4052, mixHMF: 28.443, purSuc: 10.6314, purHMF: 25.8981, finSuc: 10.4052, finHMF: 28.443, devSuc: 0.2262, devHMF: 2.5449, rotation: "+5.2", weight: "800 gm", batchNum: "1504-2" },
+      { date: 46139, batch: "1504-3", type: "عسل زهور الربيع", mixSuc: 10.179, mixHMF: 34.5807, purSuc: 9.3496, purHMF: 27.9939, finSuc: 10.179, finHMF: 34.5807, devSuc: 0.8294, devHMF: 6.5868, rotation: "+3.9", weight: "800 gm", batchNum: "1504-3" },
+      { date: 46139, batch: "1504-4", type: "عسل زهور الربيع", mixSuc: 9.7266, mixHMF: 20.2095, purSuc: 9.9528, purHMF: 20.0598, finSuc: 9.7266, finHMF: 20.2095, devSuc: 0.2262, devHMF: 0.1497, rotation: "+2.1", weight: "800 gm", batchNum: "1504-4" },
+      { date: 46047, batch: "1455-2", type: "عسل نوارة البرسيم", mixSuc: 6.9368, mixHMF: 26.4969, purSuc: 7.54, purHMF: 26.1975, finSuc: 6.9368, finHMF: 26.4969, devSuc: 0.6032, devHMF: 0.2994, rotation: "+0.2", weight: "800 gm", batchNum: "1455-2" },
+      { date: 46047, batch: "1455-3", type: "عسل نوارة البرسيم", mixSuc: 6.5598, mixHMF: 27.3951, purSuc: 6.3336, purHMF: 26.1975, finSuc: 6.5598, finHMF: 27.3951, devSuc: 0.2262, devHMF: 1.1976, rotation: "+0.1", weight: "800 gm", batchNum: "1455-3" },
+      { date: 46047, batch: "1455-4", type: "عسل نوارة البرسيم", mixSuc: 6.4844, mixHMF: 32.1855, purSuc: 8.294, purHMF: 24.9999, finSuc: 6.4844, finHMF: 32.1855, devSuc: 1.8096, devHMF: 7.1856, rotation: "-0.6", weight: "800 gm", batchNum: "1455-4" },
+      { date: 46050, batch: "1456-1", type: "عسل زهور الربيع", mixSuc: 5.8812, mixHMF: 59.88, purSuc: 5.7304, purHMF: 55.5387, finSuc: 5.8812, finHMF: 59.88, devSuc: 0.1508, devHMF: 4.3413, rotation: "+0.2", weight: "450 gm", batchNum: "1456-1" },
+      { date: 46051, batch: "1456-2", type: "عسل زهور الربيع", mixSuc: 4.7502, mixHMF: 62.1255, purSuc: 4.2224, purHMF: 61.2273, finSuc: 4.7502, finHMF: 62.1255, devSuc: 0.5278, devHMF: 0.8982, rotation: "-1.5", weight: "800 gm", batchNum: "1456-2" },
+      { date: 46051, batch: "1456-3", type: "عسل زهور الربيع", mixSuc: 4.8256, mixHMF: 63.6225, purSuc: 4.9764, purHMF: 63.1734, finSuc: 4.8256, finHMF: 63.6225, devSuc: 0.1508, devHMF: 0.4491, rotation: "-1.2", weight: "800 gm", batchNum: "1456-3" },
+      { date: 46056, batch: "1456-4", type: "عسل زهور الربيع", mixSuc: 5.5796, mixHMF: 59.7303, purSuc: 5.9566, purHMF: 63.1734, finSuc: 5.5796, finHMF: 59.7303, devSuc: 0.377, devHMF: 3.4431, rotation: "+0.2", weight: "800 gm", batchNum: "1456-4" },
+      { date: 46069, batch: "1468-1", type: "عسل زهور الربيع", mixSuc: 5.1272, mixHMF: 71.7063, purSuc: 5.1272, purHMF: 63.4728, finSuc: 5.1272, finHMF: 71.7063, devSuc: 0, devHMF: 8.2335, rotation: "-2.0", weight: "800 gm", batchNum: "1468-1" },
+      { date: 46068, batch: "1468-2", type: "عسل زهور الربيع", mixSuc: 5.278, mixHMF: 89.9697, purSuc: 5.8812, purHMF: 59.5806, finSuc: 5.278, finHMF: 89.9697, devSuc: 0.6032, devHMF: 30.3891, rotation: "-1.6", weight: "800 gm", batchNum: "1468-2" },
+      { date: 46069, batch: "1468-3", type: "عسل زهور الربيع", mixSuc: 4.8256, mixHMF: 64.5207, purSuc: 3.77, purHMF: 71.2572, finSuc: 4.8256, finHMF: 64.5207, devSuc: 1.0556, devHMF: 6.7365, rotation: "-2.2", weight: "800 gm", batchNum: "1468-3" },
+      { date: 46069, batch: "1468-4", type: "عسل زهور الربيع", mixSuc: 4.2224, mixHMF: 69.0117, purSuc: 2.8652, purHMF: 67.0656, finSuc: 4.2224, finHMF: 69.0117, devSuc: 1.3572, devHMF: 1.9461, rotation: "-3.2", weight: "800 gm", batchNum: "1468-4" },
+      { date: 46075, batch: "1472-1", type: "عسل زهور الربيع", mixSuc: 4.2224, mixHMF: 62.4249, purSuc: 5.5796, purHMF: 61.0776, finSuc: 4.2224, finHMF: 62.4249, devSuc: 1.3572, devHMF: 1.3473, rotation: "-1.4", weight: "450 gm", batchNum: "1472-1" },
+      { date: 46075, batch: "1472-2", type: "عسل زهور الربيع", mixSuc: 3.393, mixHMF: 69.4608, purSuc: 4.3732, purHMF: 66.4668, finSuc: 3.393, finHMF: 69.4608, devSuc: 0.9802, devHMF: 2.994, rotation: "-5.3", weight: "450 gm", batchNum: "1472-2" },
+      { date: 46078, batch: "1472-3", type: "عسل زهور الربيع", mixSuc: 3.3176, mixHMF: 58.9818, purSuc: 3.6192, purHMF: 53.5926, finSuc: 3.3176, finHMF: 58.9818, devSuc: 0.3016, devHMF: 5.3892, rotation: "-5.8", weight: "800 gm", batchNum: "1472-3" },
+      { date: 46078, batch: "1472-4", type: "عسل زهور الربيع", mixSuc: 2.3374, mixHMF: 49.401, purSuc: 5.278, purHMF: 55.0896, finSuc: 2.3374, finHMF: 49.401, devSuc: 2.9406, devHMF: 5.6886, rotation: "-3.3", weight: "450 gm", batchNum: "1472-4" },
+      { date: 46126, batch: "1499-1", type: "عسل نوارة البرسيم", mixSuc: 8.1432, mixHMF: 17.0658, purSuc: 4.4486, purHMF: 14.3712, finSuc: 8.1432, finHMF: 17.0658, devSuc: 3.6946, devHMF: 2.6946, rotation: "+2.6", weight: "250 gm", batchNum: "1499-1" },
+      { date: 46130, batch: "1499-2", type: "عسل نوارة البرسيم", mixSuc: 7.917, mixHMF: 16.467, purSuc: 8.2186, purHMF: 13.3233, finSuc: 7.917, finHMF: 16.467, devSuc: 0.3016, devHMF: 3.1437, rotation: "+3.5", weight: "250 gm", batchNum: "1499-2" },
+      { date: 46130, batch: "1500-4", type: "عسل زهور الربيع", mixSuc: 9.425, mixHMF: 22.9041, purSuc: 9.5758, purHMF: 21.7065, finSuc: 9.425, finHMF: 22.9041, devSuc: 0.1508, devHMF: 1.1976, rotation: "+4.3", weight: "450 gm", batchNum: "1500-4" },
+      { date: 46130, batch: "1501-1", type: "عسل زهور الربيع", mixSuc: 8.8972, mixHMF: 24.1017, purSuc: 8.9726, purHMF: 20.958, finSuc: 8.8972, finHMF: 24.1017, devSuc: 0.0754, devHMF: 3.1437, rotation: "+2.6", weight: "250 gm", batchNum: "1501-1" },
+      { date: 46134, batch: "1501-2", type: "عسل زهور الربيع", mixSuc: 8.5202, mixHMF: 37.425, purSuc: 7.917, purHMF: 26.946, finSuc: 8.5202, finHMF: 37.425, devSuc: 0.6032, devHMF: 10.479, rotation: "+2.1", weight: "250 gm", batchNum: "1501-2" },
+      { date: 46134, batch: "1502-1", type: "عسل نوارة البرسيم", mixSuc: 7.9924, mixHMF: 19.461, purSuc: 6.2582, purHMF: 13.0239, finSuc: 7.9924, finHMF: 19.461, devSuc: 1.7342, devHMF: 6.4371, rotation: "+3.2", weight: "250 gm", batchNum: "1502-1" },
+    ];
+
+    // ==================== LOCALSTORAGE ====================
+    const LS_DATA_KEY = 'honey_qc_data';
+    const LS_META_KEY = 'honey_qc_meta';
+    const LS_LOGO_KEY = 'honey_qc_logo';
+    const LS_COMPANY_KEY = 'honey_qc_company';
+
+    function saveToStorage() {
+      try {
+        localStorage.setItem(LS_DATA_KEY, JSON.stringify(allData));
+        const meta = { lastSave: new Date().toISOString(), count: allData.length, source: 'user' };
+        localStorage.setItem(LS_META_KEY, JSON.stringify(meta));
+        updateStorageBadge(true);
+        updateSettingsInfo();
+      } catch (e) {
+        showToast('error', '❌ فشل حفظ البيانات (مساحة التخزين ممتلئة)');
+      }
+    }
+
+    function loadFromStorage() {
+      try {
+        const saved = localStorage.getItem(LS_DATA_KEY);
+        if (saved) {
+          allData = JSON.parse(saved);
+          filteredData = [...allData];
+          reportData = [...allData];
+          populateTypeFilter();
+          populateReportFilter();
+          resetFilters();
+          showToast('success', `✅ تم تحميل ${allData.length} سجل محفوظ`);
+          updateStorageBadge(true);
+          updateSettingsInfo();
+          return true;
+        }
+      } catch (e) { console.warn('Storage load error', e); }
+      return false;
+    }
+
+    function saveDataNow() {
+      saveToStorage();
+      showToast('success', `✅ تم حفظ ${allData.length} سجل في ذاكرة الجهاز`);
+    }
+
+    function updateStorageBadge(saved) {
+      const badge = document.getElementById('storageBadge');
+      if (saved) {
+        badge.textContent = `💾 محفوظ (${allData.length} سجل)`;
+        badge.style.background = 'rgba(76,175,122,0.15)';
+        badge.style.borderColor = 'rgba(76,175,122,0.3)';
+        badge.style.color = '#4CAF7A';
+      } else {
+        badge.textContent = '💾 غير محفوظ';
+        badge.style.background = 'rgba(232,160,48,0.15)';
+        badge.style.borderColor = 'rgba(232,160,48,0.3)';
+        badge.style.color = '#E8A030';
+      }
+    }
+
+    function updateSettingsInfo() {
+      const meta = JSON.parse(localStorage.getItem(LS_META_KEY) || '{}');
+      safeSet('sett_totalRecords', allData.length);
+      safeSet('sett_lastSave', meta.lastSave ? new Date(meta.lastSave).toLocaleString('ar-EG') : '—');
+      safeSet('sett_dataSource', meta.source === 'user' ? 'بيانات المستخدم (محفوظة)' : 'البيانات الافتراضية');
+      safeSet('sett_today', new Date().toLocaleDateString('ar-EG'));
+      safeSet('sett_browser', navigator.userAgent.split(' ').pop().split('/')[0]);
+      try {
+        const size = JSON.stringify(allData).length;
+        safeSet('sett_storageSize', (size / 1024).toFixed(1) + ' KB');
+      } catch (e) { }
+    }
+
+    // ==================== SETTINGS ====================
+    function saveCompanySettings() {
+      const name = document.getElementById('settCompanyName').value.trim();
+      if (name) {
+        companyName = name;
+        localStorage.setItem(LS_COMPANY_KEY, name);
+        document.getElementById('headerCompanyName').textContent = name;
+        document.getElementById('printCompanyNameDash').textContent = name;
+      }
+      if (logoBase64) {
+        localStorage.setItem(LS_LOGO_KEY, logoBase64);
+        applyLogoToHeader(logoBase64);
+      }
+      showToast('success', '✅ تم حفظ إعدادات الشركة');
+    }
+
+    function uploadLogo(input) {
+      const file = input.files[0];
+      if (!file) return;
+      if (file.size > 2 * 1024 * 1024) { showToast('error', '❌ حجم الصورة يجب أن يكون أقل من 2MB'); return; }
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        logoBase64 = e.target.result;
+        document.getElementById('logoPreview').innerHTML = `<div class="preview"><img src="${logoBase64}" alt="logo"></div>`;
+        showToast('info', 'ℹ️ الشعار جاهز - اضغط "حفظ الإعدادات" لتطبيقه');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function applyLogoToHeader(b64) {
+      const el = document.getElementById('headerLogoIcon');
+      el.innerHTML = `<img src="${b64}" alt="logo">`;
+    }
+
+    function loadSettings() {
+      const savedCompany = localStorage.getItem(LS_COMPANY_KEY);
+      const savedLogo = localStorage.getItem(LS_LOGO_KEY);
+      if (savedCompany) {
+        companyName = savedCompany;
+        document.getElementById('headerCompanyName').textContent = savedCompany;
+        document.getElementById('settCompanyName').value = savedCompany;
+        const el = document.getElementById('printCompanyNameDash');
+        if (el) el.textContent = savedCompany;
+      }
+      if (savedLogo) {
+        logoBase64 = savedLogo;
+        applyLogoToHeader(savedLogo);
+        document.getElementById('logoPreview').innerHTML = `<div class="preview"><img src="${savedLogo}" alt="logo"></div>`;
+      }
+    }
+
+    function deleteAllData() {
+      const pwd = document.getElementById('deletePassword').value;
+      if (pwd !== 'samir') {
+        showToast('error', '❌ كلمة المرور غير صحيحة');
+        document.getElementById('deletePassword').value = '';
+        return;
+      }
+      if (!confirm('⚠️ تحذير: هذه العملية لا يمكن التراجع عنها!\n\nسيتم حذف جميع البيانات بالكامل بما فيها البيانات الافتراضية.\n\nهل أنت متأكد تماماً؟')) return;
+      // Delete ALL data including defaults
+      allData = [];
+      filteredData = [];
+      reportData = [];
+      newEntries = [];
+      localStorage.removeItem(LS_DATA_KEY);
+      localStorage.removeItem(LS_META_KEY);
+      localStorage.removeItem('honey_qc_thresholds');
+      document.getElementById('deletePassword').value = '';
+      populateTypeFilter();
+      populateReportFilter();
+      resetFilters();
+      updateStats();
+      renderCharts();
+      renderMainTable();
+      updateControl();
+      renderRecentEntries();
+      renderSearchResults('');
+      document.getElementById('totalRecordsCount').textContent = 0;
+      updateStorageBadge(false);
+      updateSettingsInfo();
+      showToast('success', '🗑️ تم حذف جميع البيانات بالكامل — النظام فارغ الآن');
+    }
+
+    // ==================== MODALS ====================
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    // Close modal on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(el => {
+      el.addEventListener('click', function (e) {
+        if (e.target === this) closeModal(this.id);
+      });
+    });
+
+    // ==================== VIEW RECORD ====================
+    function viewRecord(idx) {
+      currentViewIndex = idx;
+      const d = allData[idx];
+      if (!d) return;
+      const ucl = parseFloat(document.getElementById('sucUCL').value) || 12;
+      const hmfUCL = parseFloat(document.getElementById('hmfUCL').value) || 80;
+      const sucOk = d.finSuc <= ucl;
+      const hmfOk = d.finHMF <= hmfUCL;
+      const status = sucOk && hmfOk ? '<span class="badge safe">✓ مقبول</span>' : '<span class="badge danger">✗ مرفوض</span>';
+
+      document.getElementById('viewModalContent').innerHTML = `
+    <div style="text-align:center;margin-bottom:20px;padding:16px;background:rgba(201,168,76,0.1);border-radius:12px;border:1px solid rgba(201,168,76,0.2);">
+      <div style="font-size:24px;font-weight:900;color:var(--gold-light);">${d.batch}</div>
+      <div style="font-size:13px;color:var(--text-muted);">${d.type.trim()} — ${formatDate(d.date)}</div>
+      <div style="margin-top:8px;">${status}</div>
+    </div>
+    <div class="record-detail-grid">
+      <div class="detail-item"><div class="d-label">التاريخ</div><div class="d-value">${formatDate(d.date)}</div></div>
+      <div class="detail-item"><div class="d-label">رقم التشغيلة</div><div class="d-value">${d.batch}</div></div>
+      <div class="detail-item"><div class="d-label">الصنف</div><div class="d-value">${d.type.trim()}</div></div>
+      <div class="detail-item"><div class="d-label">الوزن</div><div class="d-value">${d.weight || '—'}</div></div>
+      <div class="detail-item"><div class="d-label">سكروز الخلط</div><div class="d-value">${d.mixSuc?.toFixed(3) || '—'}</div></div>
+      <div class="detail-item"><div class="d-label">HMF الخلط</div><div class="d-value">${d.mixHMF?.toFixed(3) || '—'}</div></div>
+      <div class="detail-item"><div class="d-label">سكروز التنقية</div><div class="d-value">${d.purSuc?.toFixed(3) || '—'}</div></div>
+      <div class="detail-item"><div class="d-label">HMF التنقية</div><div class="d-value">${d.purHMF?.toFixed(3) || '—'}</div></div>
+      <div class="detail-item"><div class="d-label">سكروز المنتج</div><div class="d-value ${sucOk ? 'safe' : 'critical'}">${d.finSuc?.toFixed(3)}</div></div>
+      <div class="detail-item"><div class="d-label">HMF المنتج</div><div class="d-value ${hmfOk ? 'safe' : 'critical'}">${d.finHMF?.toFixed(2)}</div></div>
+      <div class="detail-item"><div class="d-label">انحراف السكروز</div><div class="d-value">${d.devSuc?.toFixed(3) || '0'}</div></div>
+      <div class="detail-item"><div class="d-label">انحراف HMF</div><div class="d-value">${d.devHMF?.toFixed(3) || '0'}</div></div>
+      <div class="detail-item"><div class="d-label">O-Rotation</div><div class="d-value">${d.rotation || '—'}</div></div>
+      <div class="detail-item"><div class="d-label">حالة السكروز</div><div class="d-value">${sucOk ? '<span class="badge safe">✓ مقبول</span>' : '<span class="badge danger">✗ مرفوض</span>'}</div></div>
+      <div class="detail-item"><div class="d-label">حالة HMF</div><div class="d-value">${hmfOk ? '<span class="badge safe">✓ مقبول</span>' : '<span class="badge danger">✗ مرفوض</span>'}</div></div>
+    </div>`;
+      openModal('viewModal');
+    }
+
+    function editFromView() {
+      closeModal('viewModal');
+      editRecord(currentViewIndex);
+    }
+
+    // ==================== EDIT RECORD ====================
+    function editRecord(idx) {
+      const d = allData[idx];
+      if (!d) return;
+      document.getElementById('edit_index').value = idx;
+      document.getElementById('edit_date').value = formatDateInput(d.date);
+      document.getElementById('edit_batch').value = d.batch;
+      document.getElementById('edit_type').value = d.type.trim();
+      document.getElementById('edit_mixSuc').value = d.mixSuc || '';
+      document.getElementById('edit_mixHMF').value = d.mixHMF || '';
+      document.getElementById('edit_purSuc').value = d.purSuc || '';
+      document.getElementById('edit_purHMF').value = d.purHMF || '';
+      document.getElementById('edit_finSuc').value = d.finSuc || '';
+      document.getElementById('edit_finHMF').value = d.finHMF || '';
+      document.getElementById('edit_rotation').value = d.rotation || '';
+      document.getElementById('edit_weight').value = d.weight || '';
+      openModal('editModal');
+    }
+
+    function saveEdit() {
+      const idx = parseInt(document.getElementById('edit_index').value);
+      if (isNaN(idx) || idx < 0 || idx >= allData.length) return;
+      const d = allData[idx];
+      const dateStr = document.getElementById('edit_date').value;
+      const finSuc = parseFloat(document.getElementById('edit_finSuc').value);
+      const finHMF = parseFloat(document.getElementById('edit_finHMF').value);
+      const mixSuc = parseFloat(document.getElementById('edit_mixSuc').value) || finSuc;
+      const mixHMF = parseFloat(document.getElementById('edit_mixHMF').value) || finHMF;
+
+      if (!dateStr || isNaN(finSuc) || isNaN(finHMF)) {
+        showToast('error', '❌ يرجى ملء الحقول المطلوبة');
+        return;
+      }
+
+      allData[idx] = {
+        ...d,
+        date: dateToExcel(dateStr),
+        batch: document.getElementById('edit_batch').value.trim(),
+        type: document.getElementById('edit_type').value.trim(),
+        mixSuc, mixHMF,
+        purSuc: parseFloat(document.getElementById('edit_purSuc').value) || finSuc,
+        purHMF: parseFloat(document.getElementById('edit_purHMF').value) || finHMF,
+        finSuc, finHMF,
+        devSuc: Math.abs(mixSuc - finSuc),
+        devHMF: Math.abs(mixHMF - finHMF),
+        rotation: document.getElementById('edit_rotation').value,
+        weight: document.getElementById('edit_weight').value,
+      };
+
+      filteredData = [...allData];
+      saveToStorage();
+      updateStats();
+      renderCharts();
+      renderMainTable();
+      updateControl();
+      closeModal('editModal');
+      showToast('success', `✅ تم تعديل التشغيلة ${allData[idx].batch}`);
+    }
+
+    // ==================== DELETE RECORD ====================
+    function deleteRecord(idx) {
+      const d = allData[idx];
+      if (!d) return;
+      document.getElementById('delete_index').value = idx;
+      const ucl = parseFloat(document.getElementById('sucUCL').value) || 12;
+      const hmfUCL = parseFloat(document.getElementById('hmfUCL').value) || 80;
+      const ok = d.finSuc <= ucl && d.finHMF <= hmfUCL;
+      document.getElementById('deleteRecordInfo').innerHTML = `
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+      <div style="background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);border-radius:8px;padding:8px 14px;text-align:center;">
+        <div style="font-size:18px;font-weight:900;color:var(--gold-light);">${d.batch}</div>
+        <div style="font-size:10px;color:var(--text-muted);">التشغيلة</div>
+      </div>
+      <div>
+        <div style="font-weight:700;">${d.type.trim()}</div>
+        <div style="font-size:12px;color:var(--text-muted);">${formatDate(d.date)} — ${d.weight || ''}</div>
+        <div style="margin-top:4px;">${ok ? '<span class="badge safe">✓ مقبول</span>' : '<span class="badge danger">✗ مرفوض</span>'}</div>
+      </div>
+    </div>`;
+      openModal('deleteModal');
+    }
+
+    function confirmDelete() {
+      const idx = parseInt(document.getElementById('delete_index').value);
+      if (isNaN(idx)) return;
+      const batch = allData[idx]?.batch;
+      allData.splice(idx, 1);
+      filteredData = allData.filter(d => filteredData.some(f => f === d || (f.batch === d.batch && f.date === d.date)));
+      filteredData = [...allData]; // Reset filter after delete
+      saveToStorage();
+      updateStats();
+      renderCharts();
+      renderMainTable();
+      updateControl();
+      closeModal('deleteModal');
+      showToast('success', `🗑️ تم حذف التشغيلة ${batch}`);
+    }
+
+    // ==================== PRINT SINGLE RECORD ====================
+    function printSingleRecord() {
+      const d = allData[currentViewIndex];
+      if (!d) return;
+      const ucl = parseFloat(document.getElementById('sucUCL').value) || 12;
+      const hmfUCL = parseFloat(document.getElementById('hmfUCL').value) || 80;
+      const sucOk = d.finSuc <= ucl;
+      const hmfOk = d.finHMF <= hmfUCL;
+
+      const logoHtml = logoBase64 ? `<img src="${logoBase64}" style="width:50px;height:50px;object-fit:cover;border-radius:8px;">` : '<span style="font-size:36px;">🍯</span>';
+
+      const win = window.open('', '_blank');
+      win.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8">
+  <title>تقرير التشغيلة ${d.batch}</title>
+  <style>
+    body { font-family: 'Cairo', sans-serif; direction: rtl; padding: 20px; color: #333; }
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+    .header { display:flex;align-items:center;gap:16px;padding:16px;border-bottom:2px solid #C9A84C;margin-bottom:20px; }
+    .company { font-size:20px;font-weight:900;color:#8B6914; }
+    .title { font-size:13px;color:#888; }
+    .batch-box { background:#FFF8E8;border:2px solid #C9A84C;border-radius:12px;padding:20px;text-align:center;margin-bottom:20px; }
+    .batch-num { font-size:32px;font-weight:900;color:#8B6914; }
+    .grid { display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px; }
+    .item { background:#f9f9f9;border:1px solid #ddd;border-radius:8px;padding:12px; }
+    .lbl { font-size:10px;color:#888;margin-bottom:4px; }
+    .val { font-size:16px;font-weight:700; }
+    .safe { color:green; } .critical { color:red; }
+    .badge { padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;display:inline-block; }
+    .badge-safe { background:#d4edda;color:#155724; } .badge-danger { background:#f8d7da;color:#721c24; }
+    .footer { text-align:center;font-size:11px;color:#999;margin-top:20px;padding-top:10px;border-top:1px solid #ddd; }
+  </style></head><body>
+  <div class="header">${logoHtml}<div><div class="company">${companyName}</div><div class="title">تقرير تشغيلة رقم ${d.batch}</div></div></div>
+  <div class="batch-box">
+    <div class="batch-num">${d.batch}</div>
+    <div>${d.type.trim()}</div>
+    <div style="margin-top:8px;">${sucOk && hmfOk ? '<span class="badge badge-safe">✓ مقبول</span>' : '<span class="badge badge-danger">✗ مرفوض</span>'}</div>
+  </div>
+  <div class="grid">
+    <div class="item"><div class="lbl">التاريخ</div><div class="val">${formatDate(d.date)}</div></div>
+    <div class="item"><div class="lbl">الوزن</div><div class="val">${d.weight || '—'}</div></div>
+    <div class="item"><div class="lbl">O-Rotation</div><div class="val">${d.rotation || '—'}</div></div>
+    <div class="item"><div class="lbl">سكروز الخلط</div><div class="val">${d.mixSuc?.toFixed(3) || '—'}</div></div>
+    <div class="item"><div class="lbl">HMF الخلط</div><div class="val">${d.mixHMF?.toFixed(3) || '—'}</div></div>
+    <div class="item"><div class="lbl">سكروز التنقية</div><div class="val">${d.purSuc?.toFixed(3) || '—'}</div></div>
+    <div class="item"><div class="lbl">HMF التنقية</div><div class="val">${d.purHMF?.toFixed(3) || '—'}</div></div>
+    <div class="item"><div class="lbl">سكروز المنتج</div><div class="val ${sucOk ? 'safe' : 'critical'}">${d.finSuc?.toFixed(3)}</div></div>
+    <div class="item"><div class="lbl">HMF المنتج</div><div class="val ${hmfOk ? 'safe' : 'critical'}">${d.finHMF?.toFixed(2)}</div></div>
+    <div class="item"><div class="lbl">انحراف سكروز</div><div class="val">${d.devSuc?.toFixed(3) || '0'}</div></div>
+    <div class="item"><div class="lbl">انحراف HMF</div><div class="val">${d.devHMF?.toFixed(3) || '0'}</div></div>
+    <div class="item"><div class="lbl">حالة السكروز</div><div class="val">${sucOk ? '<span class="badge badge-safe">✓ مقبول</span>' : '<span class="badge badge-danger">✗ مرفوض</span>'}</div></div>
+    <div class="item"><div class="lbl">حالة HMF</div><div class="val">${hmfOk ? '<span class="badge badge-safe">✓ مقبول</span>' : '<span class="badge badge-danger">✗ مرفوض</span>'}</div></div>
+  </div>
+  <div class="footer">تم طباعة هذا التقرير بتاريخ: ${new Date().toLocaleDateString('ar-EG')} — ${companyName}</div>
+  <script>window.onload=function(){window.print();}<\/script></body></html>`);
+      win.document.close();
+    }
+
+    // ==================== PRINT REPORTS ====================
+    function printReport(type) {
+      closeModal('printModal');
+      const ucl = parseFloat(document.getElementById('sucUCL').value) || 12;
+      const hmfUCL = parseFloat(document.getElementById('hmfUCL').value) || 80;
+      const logoHtml = logoBase64 ? `<img src="${logoBase64}" style="width:50px;height:50px;object-fit:cover;border-radius:8px;">` : '<span style="font-size:36px;">🍯</span>';
+
+      const headerHtml = `<div style="display:flex;align-items:center;gap:16px;padding:16px 0;border-bottom:2px solid #C9A84C;margin-bottom:20px;">
+    ${logoHtml}
+    <div>
+      <div style="font-size:20px;font-weight:900;color:#8B6914;">${companyName}</div>
+      <div style="font-size:12px;color:#888;">${getReportTitle(type)} — ${new Date().toLocaleDateString('ar-EG')}</div>
+    </div>
+  </div>`;
+
+      const footerHtml = `<div style="text-align:center;font-size:10px;color:#999;margin-top:20px;padding-top:10px;border-top:1px solid #ddd;">
+    ${companyName} | نظام تحليل جودة العسل | تاريخ الطباعة: ${new Date().toLocaleString('ar-EG')}
+  </div>`;
+
+      const data = type.startsWith('rpt_') ? reportData : filteredData;
+      let content = '';
+
+      if (type === 'dashboard' || type === 'rpt_full' || type === 'rpt_stats') {
+        const pass = data.filter(d => d.finSuc <= ucl && d.finHMF <= hmfUCL).length;
+        const fail = data.length - pass;
+        const avgSuc = data.length ? (data.reduce((s, d) => s + d.finSuc, 0) / data.length).toFixed(2) : 0;
+        const avgHMF = data.length ? (data.reduce((s, d) => s + d.finHMF, 0) / data.length).toFixed(1) : 0;
+        const types = [...new Set(data.map(d => d.type.trim()))].filter(Boolean).length;
+        content += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+      ${[
+            ['🍯', 'إجمالي التشغيلات', data.length, '#8B6914'],
+            ['🏷️', 'أصناف العسل', types, '#D4870A'],
+            ['✅', 'تشغيلات مقبولة', pass, 'green'],
+            ['⚠️', 'تشغيلات مرفوضة', fail, 'red'],
+            ['🔬', 'متوسط السكروز', avgSuc, '#5B9BD5'],
+            ['🌡️', 'متوسط HMF', avgHMF, '#D4870A'],
+          ].map(([icon, lbl, val, col]) => `<div style="background:#f9f9f9;border:1px solid #ddd;border-radius:8px;padding:14px;">
+        <div style="font-size:20px;">${icon}</div>
+        <div style="font-size:24px;font-weight:900;color:${col};">${val}</div>
+        <div style="font-size:11px;color:#888;">${lbl}</div>
+      </div>`).join('')}
+    </div>`;
+      }
+
+      if (type !== 'rpt_stats') {
+        const tableData = type === 'critical' || type === 'rpt_critical'
+          ? data.filter(d => d.finSuc > ucl || d.finHMF > hmfUCL)
+          : data;
+        content += buildPrintTable(tableData, ucl, hmfUCL);
+      }
+
+      const win = window.open('', '_blank');
+      win.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl"><head>
+    <meta charset="UTF-8"><title>${getReportTitle(type)}</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+      body { font-family:'Cairo',sans-serif; direction:rtl; padding:20px; color:#333; font-size:12px; }
+      table { width:100%; border-collapse:collapse; margin-top:10px; }
+      thead th { background:#f0e8d0; border:1px solid #C9A84C; padding:8px; font-weight:700; font-size:11px; }
+      tbody td { border:1px solid #ddd; padding:7px 8px; }
+      tbody tr:nth-child(even) { background:#fafafa; }
+      .safe { color:green; font-weight:700; } .critical { color:red; font-weight:700; }
+      .badge-safe { background:#d4edda; color:#155724; padding:2px 8px; border-radius:10px; font-size:10px; }
+      .badge-danger { background:#f8d7da; color:#721c24; padding:2px 8px; border-radius:10px; font-size:10px; }
+    </style></head><body>
+    ${headerHtml}${content}${footerHtml}
+    <script>window.onload=function(){window.print();}<\/script></body></html>`);
+      win.document.close();
+    }
+
+    function getReportTitle(type) {
+      const titles = {
+        dashboard: 'تقرير لوحة التحكم الكاملة', table: 'تقرير جدول البيانات',
+        critical: 'تقرير السجلات الحرجة', control: 'تقرير مراقبة الانحراف',
+        rpt_full: 'التقرير الشامل', rpt_table: 'تقرير جدول البيانات',
+        rpt_critical: 'تقرير السجلات الحرجة', rpt_stats: 'تقرير الإحصاءات'
+      };
+      return titles[type] || 'تقرير';
+    }
+
+    function buildPrintTable(data, ucl, hmfUCL) {
+      if (!data.length) return '<p style="text-align:center;color:#999;padding:20px;">لا توجد بيانات</p>';
+      return `<table>
+    <thead><tr>
+      <th>#</th><th>التاريخ</th><th>رقم التشغيلة</th><th>الصنف</th>
+      <th>سكروز المنتج</th><th>HMF المنتج</th>
+      <th>انحراف سكروز</th><th>انحراف HMF</th>
+      <th>الوزن</th><th>O-Rotation</th><th>الحالة</th>
+    </tr></thead>
+    <tbody>${data.map((d, i) => {
+        const sucOk = d.finSuc <= ucl;
+        const hmfOk = d.finHMF <= hmfUCL;
+        const ok = sucOk && hmfOk;
+        return `<tr>
+        <td>${i + 1}</td>
+        <td>${formatDate(d.date)}</td>
+        <td><strong>${d.batch}</strong></td>
+        <td>${d.type.trim()}</td>
+        <td class="${sucOk ? 'safe' : 'critical'}">${d.finSuc?.toFixed(3)}</td>
+        <td class="${hmfOk ? 'safe' : 'critical'}">${d.finHMF?.toFixed(2)}</td>
+        <td>${d.devSuc?.toFixed(3) || '0'}</td>
+        <td>${d.devHMF?.toFixed(3) || '0'}</td>
+        <td>${d.weight || '—'}</td>
+        <td>${d.rotation || '—'}</td>
+        <td>${ok ? '<span class="badge-safe">✓ مقبول</span>' : '<span class="badge-danger">✗ مرفوض</span>'}</td>
+      </tr>`;
+      }).join('')}</tbody></table>
+    <div style="margin-top:10px;font-size:11px;color:#888;">إجمالي: ${data.length} سجل | مقبول: ${data.filter(d => d.finSuc <= ucl && d.finHMF <= hmfUCL).length} | مرفوض: ${data.filter(d => d.finSuc > ucl || d.finHMF > hmfUCL).length}</div>`;
+    }
+
+    // ==================== EXPORT ====================
+    function showExportMenu() {
+      const html = `<div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000;display:flex;align-items:center;justify-content:center;" onclick="this.remove()">
+    <div style="background:var(--dark-2);border:1px solid var(--panel-border);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:10px;min-width:220px;" onclick="event.stopPropagation()">
+      <div style="font-size:15px;font-weight:700;color:var(--gold-light);margin-bottom:8px;">📤 تصدير البيانات</div>
+      <button class="btn-export btn-xlsx" onclick="exportData('xlsx');this.closest('[onclick]').remove()" style="padding:11px;">📊 Excel (.xlsx)</button>
+      <button class="btn-export btn-csv" onclick="exportData('csv');this.closest('[onclick]').remove()" style="padding:11px;">📃 CSV</button>
+      <button class="btn-export btn-json" onclick="exportData('json');this.closest('[onclick]').remove()" style="padding:11px;">🗂️ JSON</button>
+      <button onclick="this.closest('[onclick]').remove()" style="background:transparent;border:1px solid var(--panel-border);color:var(--text-muted);padding:8px;border-radius:8px;cursor:pointer;font-family:Cairo,sans-serif;">إلغاء</button>
+    </div>
+  </div>`;
+      document.body.insertAdjacentHTML('beforeend', html);
+    }
+
+    function exportData(format) {
+      const data = reportData.length ? reportData : filteredData;
+      const filename = `honey_data_${new Date().toISOString().slice(0, 10)}`;
+
+      if (format === 'json') {
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        downloadBlob(blob, filename + '.json');
+        showToast('success', `✅ تم تصدير ${data.length} سجل JSON`);
+        return;
+      }
+
+      if (format === 'csv') {
+        const headers = ['التاريخ', 'رقم التشغيلة', 'الصنف', 'سكروز الخلط', 'HMF الخلط', 'سكروز التنقية', 'HMF التنقية', 'سكروز المنتج', 'HMF المنتج', 'انحراف السكروز', 'انحراف HMF', 'الوزن', 'O-Rotation'];
+        const rows = data.map(d => [
+          formatDate(d.date), d.batch, d.type.trim(),
+          d.mixSuc, d.mixHMF, d.purSuc, d.purHMF,
+          d.finSuc, d.finHMF, d.devSuc, d.devHMF,
+          d.weight, d.rotation
+        ].join(','));
+        const csv = '\uFEFF' + headers.join(',') + '\n' + rows.join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        downloadBlob(blob, filename + '.csv');
+        showToast('success', `✅ تم تصدير ${data.length} سجل CSV`);
+        return;
+      }
+
+      if (format === 'xlsx') {
+        const wsData = [
+          ['التاريخ', 'رقم التشغيلة', 'الصنف', 'سكروز الخلط', 'HMF الخلط', 'سكروز التنقية', 'HMF التنقية', 'سكروز المنتج', 'HMF المنتج', 'انحراف السكروز', 'انحراف HMF', 'الوزن', 'O-Rotation'],
+          ...data.map(d => [
+            formatDate(d.date), d.batch, d.type.trim(),
+            d.mixSuc, d.mixHMF, d.purSuc, d.purHMF,
+            d.finSuc, d.finHMF, d.devSuc, d.devHMF,
+            d.weight, d.rotation
+          ])
+        ];
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        XLSX.utils.book_append_sheet(wb, ws, 'بيانات العسل');
+        XLSX.writeFile(wb, filename + '.xlsx');
+        showToast('success', `✅ تم تصدير ${data.length} سجل Excel`);
+      }
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // ==================== INIT ====================
+    function init() {
+      // Try to load from localStorage first
+      const loaded = loadFromStorage();
+      if (!loaded) {
+        allData = [...RAW_DATA];
+        filteredData = [...allData];
+      }
+      reportData = [...allData];
+
+      loadSettings();
+      populateTypeFilter();
+      populateReportFilter();
+      updateStats();
+      renderCharts();
+      renderMainTable();
+      renderSearchResults('');
+      updateControl();
+      updateSettingsInfo();
+
+      document.getElementById('dateBadge').textContent = `📅 ${new Date().toLocaleDateString('ar-EG')}`;
+      safeSet('totalRecordsCount', allData.length);
+      // Load saved thresholds
+      loadSavedThresholds();
+    }
+
+    // ==================== EXCEL IMPORT ====================
+    function loadExcelFile(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const wb = XLSX.read(e.target.result, { type: 'binary' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+          const imported = [];
+          for (let i = 2; i < raw.length; i++) {
+            const r = raw[i];
+            if (!r[1]) continue;
+            imported.push({
+              date: r[0] || 0,
+              batch: String(r[1] || ''),
+              type: String(r[2] || '').trim(),
+              mixSuc: parseFloat(r[3]) || 0,
+              mixHMF: parseFloat(r[4]) || 0,
+              purSuc: parseFloat(r[5]) || 0,
+              purHMF: parseFloat(r[6]) || 0,
+              finSuc: parseFloat(r[7]) || 0,
+              finHMF: parseFloat(r[8]) || 0,
+              devSuc: parseFloat(r[9]) || 0,
+              devHMF: parseFloat(r[10]) || 0,
+              rotation: String(r[11] || ''),
+              weight: String(r[12] || ''),
+              batchNum: String(r[13] || r[1] || ''),
+            });
+          }
+          if (imported.length > 0) {
+            allData = imported;
+            filteredData = [...allData];
+            reportData = [...allData];
+            saveToStorage();
+            populateTypeFilter();
+            populateReportFilter();
+            resetFilters();
+            showToast('success', `✅ تم تحميل ${imported.length} سجل بنجاح`);
+            safeSet('totalRecordsCount', allData.length);
+            updateSettingsInfo();
+          } else {
+            showToast('error', '❌ لم يتم العثور على بيانات صالحة');
+          }
+        } catch (err) {
+          showToast('error', '❌ خطأ في قراءة الملف');
+          console.error(err);
+        }
+      };
+      reader.readAsBinaryString(file);
+      input.value = '';
+    }
+
+    // ==================== FILTERS ====================
+    function populateTypeFilter() {
+      const types = [...new Set(allData.map(d => d.type.trim()))].filter(Boolean).sort();
+      ['filterType'].forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        sel.innerHTML = '<option value="">جميع الأصناف</option>';
+        types.forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t; sel.appendChild(o); });
+      });
+      const eSel = document.getElementById('entType');
+      types.forEach(t => {
+        if (!eSel.querySelector(`option[value="${t}"]`)) {
+          const opt = document.createElement('option');
+          opt.value = t; opt.textContent = t;
+          eSel.insertBefore(opt, eSel.lastElementChild);
+        }
+      });
+    }
+
+    function populateReportFilter() {
+      const types = [...new Set(allData.map(d => d.type.trim()))].filter(Boolean).sort();
+      const sel = document.getElementById('rptFilterType');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">جميع الأصناف</option>';
+      types.forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t; sel.appendChild(o); });
+    }
+
+    function applyFilters() {
+      const type = document.getElementById('filterType').value;
+      const dateFrom = document.getElementById('filterDateFrom').value;
+      const dateTo = document.getElementById('filterDateTo').value;
+      const batch = document.getElementById('filterBatch').value.trim();
+      filteredData = allData.filter(d => {
+        if (type && d.type.trim() !== type) return false;
+        if (batch && !d.batch.includes(batch)) return false;
+        if (dateFrom || dateTo) {
+          const dDate = excelDateToDate(d.date);
+          if (dateFrom && dDate < new Date(dateFrom)) return false;
+          if (dateTo && dDate > new Date(dateTo + 'T23:59:59')) return false;
+        }
+        return true;
+      });
+      updateStats(); renderCharts(); renderMainTable(); updateControl();
+    }
+
+    function resetFilters() {
+      document.getElementById('filterType').value = '';
+      document.getElementById('filterDateFrom').value = '';
+      document.getElementById('filterDateTo').value = '';
+      document.getElementById('filterBatch').value = '';
+      filteredData = [...allData];
+      updateStats(); renderCharts(); renderMainTable(); updateControl();
+    }
+
+    function applyReportFilter() {
+      const type = document.getElementById('rptFilterType').value;
+      const dateFrom = document.getElementById('rptDateFrom').value;
+      const dateTo = document.getElementById('rptDateTo').value;
+      const batch = document.getElementById('rptBatch').value.trim();
+      reportData = allData.filter(d => {
+        if (type && d.type.trim() !== type) return false;
+        if (batch && !d.batch.includes(batch)) return false;
+        if (dateFrom || dateTo) {
+          const dDate = excelDateToDate(d.date);
+          if (dateFrom && dDate < new Date(dateFrom)) return false;
+          if (dateTo && dDate > new Date(dateTo + 'T23:59:59')) return false;
+        }
+        return true;
+      });
+      safeSet('rptCount', reportData.length);
+      renderReportTable();
+    }
+
+    function resetReportFilter() {
+      document.getElementById('rptFilterType').value = '';
+      document.getElementById('rptDateFrom').value = '';
+      document.getElementById('rptDateTo').value = '';
+      document.getElementById('rptBatch').value = '';
+      reportData = [...allData];
+      safeSet('rptCount', reportData.length);
+      renderReportTable();
+    }
+
+    function renderReportTable() {
+      const ucl = parseFloat(document.getElementById('sucUCL').value) || 12;
+      const hmfUCL = parseFloat(document.getElementById('hmfUCL').value) || 80;
+      const tbody = document.getElementById('rptTableBody');
+      safeSet('rptTableCount', reportData.length + ' سجل');
+      tbody.innerHTML = reportData.slice(0, 100).map((d, i) => {
+        const sucOk = d.finSuc <= ucl, hmfOk = d.finHMF <= hmfUCL;
+        const ok = sucOk && hmfOk;
+        return `<tr>
+      <td>${i + 1}</td>
+      <td>${formatDate(d.date)}</td>
+      <td class="rotation-number">${d.batch}</td>
+      <td>${d.type.trim()}</td>
+      <td class="${sucOk ? 'val-safe' : 'val-critical'}">${d.finSuc?.toFixed(3)}</td>
+      <td class="${hmfOk ? 'val-safe' : 'val-critical'}">${d.finHMF?.toFixed(2)}</td>
+      <td>${d.devSuc?.toFixed(3) || '0'}</td>
+      <td>${d.devHMF?.toFixed(3) || '0'}</td>
+      <td>${d.weight || '—'}</td>
+      <td>${d.rotation || '—'}</td>
+      <td>${ok ? '<span class="badge safe">✓ مقبول</span>' : '<span class="badge danger">✗ مرفوض</span>'}</td>
+    </tr>`;
+      }).join('');
+    }
+
+    // ==================== STATS ====================
+    function updateStats() {
+      const data = filteredData;
+      const ucl = parseFloat(document.getElementById('sucUCL').value) || 12;
+      const lcl = parseFloat(document.getElementById('sucLCL').value) || 0;
+      const hmfUCL = parseFloat(document.getElementById('hmfUCL').value) || 80;
+      const pass = data.filter(d => d.finSuc <= ucl && d.finSuc >= lcl && d.finHMF <= hmfUCL).length;
+      const fail = data.length - pass;
+      const avgSuc = data.length ? (data.reduce((s, d) => s + d.finSuc, 0) / data.length).toFixed(2) : 0;
+      const avgHMF = data.length ? (data.reduce((s, d) => s + d.finHMF, 0) / data.length).toFixed(1) : 0;
+      const types = [...new Set(data.map(d => d.type.trim()))].filter(Boolean).length;
+      // Animate number changes
+      function animateNum(id, val) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.style.transform = 'scale(0.8)';
+        el.style.opacity = '0.5';
+        el.style.transition = 'all 0.3s ease';
+        setTimeout(() => {
+          el.textContent = val;
+          el.style.transform = 'scale(1)';
+          el.style.opacity = '1';
+        }, 150);
+      }
+      animateNum('statTotal', data.length);
+      animateNum('statTypes', types);
+      animateNum('statPass', pass);
+      animateNum('statFail', fail);
+      animateNum('statAvgSuc', avgSuc);
+      animateNum('statAvgHMF', avgHMF);
+      safeSet('statTotalSub', `${data.length} سجل محمّل`);
+      const banner = document.getElementById('alertBanner');
+      if (!banner) return;
+      if (fail > 0) {
+        banner.className = 'alert-banner warning';
+        banner.innerHTML = `⚠️ تنبيه: ${fail} تشغيلة (${Math.round(fail / data.length * 100)}%) خارجة عن حدود التحكم`;
+        banner.classList.remove('hidden');
+      } else if (data.length > 0) {
+        banner.className = 'alert-banner success';
+        banner.innerHTML = `✅ جميع التشغيلات (${data.length}) ضمن حدود الجودة المطلوبة`;
+        banner.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+      }
+      // Update critical table
+      const criticals = data.filter(d => d.finSuc > ucl || d.finHMF > hmfUCL);
+      safeSet('criticalCount', `${criticals.length} سجل`);
+      const ctb = document.getElementById('criticalTableBody'); if (ctb) ctb.innerHTML = criticals.map(d => {
+        const sucOk = d.finSuc <= ucl, hmfOk = d.finHMF <= hmfUCL;
+        return `<tr>
+      <td class="rotation-number">${d.batch}</td>
+      <td>${d.type.trim()}</td>
+      <td>${formatDate(d.date)}</td>
+      <td class="${sucOk ? '' : 'val-critical'}">${d.finSuc?.toFixed(3)}</td>
+      <td class="${hmfOk ? '' : 'val-critical'}">${d.finHMF?.toFixed(2)}</td>
+      <td>${d.devSuc?.toFixed(3) || '0'}</td>
+      <td>${d.devHMF?.toFixed(3) || '0'}</td>
+      <td>${!sucOk && !hmfOk ? '<span class="badge danger">✗ مرفوض كلياً</span>' : '<span class="badge warning">⚠ مرفوض جزئياً</span>'}</td>
+    </tr>`;
+      }).join('');
+    }
+
+    // ==================== CHARTS ====================
+    const CHART_DEFAULTS = {
+      color: 'rgba(245,237,214,0.85)',
+      grid: 'rgba(61,52,32,0.4)',
+      tick: 'rgba(168,144,96,0.7)',
+    };
+
+    function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+    function renderCharts() {
+      renderTypeChart(); renderSucByType(); renderSucTrend();
+      renderHMFTrend(); renderHMFByType(); renderDevSuc();
+    }
+
+    function renderTypeChart() {
+      destroyChart('typeChart');
+      const counts = {};
+      filteredData.forEach(d => { const t = d.type.trim(); counts[t] = (counts[t] || 0) + 1; });
+      const labels = Object.keys(counts);
+      const vals = Object.values(counts);
+      const colors = labels.map((l, i) => TYPE_COLORS[l] || COLOR_PALETTE[i % COLOR_PALETTE.length]);
+      charts['typeChart'] = new Chart(document.getElementById('typeChart'), {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data: vals, backgroundColor: colors, borderColor: '#1E1A10', borderWidth: 3 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: 'right', labels: { color: CHART_DEFAULTS.color, font: { family: 'Cairo', size: 11 }, boxWidth: 12, padding: 8 } } }
+        }
+      });
+    }
+
+    function renderSucByType() {
+      destroyChart('sucByTypeChart');
+      const byType = {};
+      filteredData.forEach(d => { const t = d.type.trim(); if (!byType[t]) byType[t] = []; byType[t].push(d.finSuc); });
+      const labels = Object.keys(byType);
+      const vals = labels.map(t => (byType[t].reduce((s, v) => s + v, 0) / byType[t].length).toFixed(2));
+      const colors = labels.map((l, i) => TYPE_COLORS[l] || COLOR_PALETTE[i % COLOR_PALETTE.length]);
+      charts['sucByTypeChart'] = new Chart(document.getElementById('sucByTypeChart'), {
+        type: 'bar',
+        data: { labels, datasets: [{ data: vals.map(Number), backgroundColor: colors, borderRadius: 8, borderSkipped: false }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: CHART_DEFAULTS.tick, font: { family: 'Cairo', size: 10 } }, grid: { color: CHART_DEFAULTS.grid } },
+            y: { ticks: { color: CHART_DEFAULTS.tick, font: { family: 'Cairo', size: 10 } }, grid: { color: CHART_DEFAULTS.grid } }
+          }
+        }
+      });
+    }
+
+    function renderSucTrend() {
+      destroyChart('sucTrendChart');
+      const data = filteredData.slice(-60);
+      const ucl = parseFloat(document.getElementById('sucUCL').value) || 12;
+      const lcl = parseFloat(document.getElementById('sucLCL').value) || 0;
+      charts['sucTrendChart'] = new Chart(document.getElementById('sucTrendChart'), {
+        type: 'line',
+        data: {
+          labels: data.map(d => d.batch),
+          datasets: [
+            { label: 'سكروز المنتج', data: data.map(d => d.finSuc), borderColor: '#C9A84C', backgroundColor: 'rgba(201,168,76,0.1)', tension: 0.4, pointRadius: 3, fill: true },
+            { label: 'UCL', data: data.map(() => ucl), borderColor: '#E05252', borderDash: [6, 3], pointRadius: 0, borderWidth: 2, fill: false },
+            { label: 'LCL', data: data.map(() => lcl), borderColor: '#4CAF7A', borderDash: [6, 3], pointRadius: 0, borderWidth: 2, fill: false }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: CHART_DEFAULTS.color, font: { family: 'Cairo', size: 11 } } } },
+          scales: {
+            x: { ticks: { color: CHART_DEFAULTS.tick, font: { family: 'Cairo', size: 10 }, maxRotation: 45 }, grid: { color: CHART_DEFAULTS.grid } },
+            y: { ticks: { color: CHART_DEFAULTS.tick, font: { family: 'Cairo', size: 10 } }, grid: { color: CHART_DEFAULTS.grid } }
+          }
+        }
+      });
+    }
+
+    function renderHMFTrend() {
+      destroyChart('hmfTrendChart');
+      const data = filteredData.slice(-60);
+      const hmfUCL = parseFloat(document.getElementById('hmfUCL').value) || 80;
+      charts['hmfTrendChart'] = new Chart(document.getElementById('hmfTrendChart'), {
+        type: 'line',
+        data: {
+          labels: data.map(d => d.batch),
+          datasets: [
+            { label: 'HMF المنتج', data: data.map(d => d.finHMF), borderColor: '#D4870A', backgroundColor: 'rgba(212,135,10,0.1)', tension: 0.4, pointRadius: 3, fill: true },
+            { label: 'UCL (80)', data: data.map(() => hmfUCL), borderColor: '#E05252', borderDash: [6, 3], pointRadius: 0, borderWidth: 2, fill: false }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: CHART_DEFAULTS.color, font: { family: 'Cairo', size: 11 } } } },
+          scales: {
+            x: { ticks: { color: CHART_DEFAULTS.tick, font: { family: 'Cairo', size: 10 }, maxRotation: 45 }, grid: { color: CHART_DEFAULTS.grid } },
+            y: { ticks: { color: CHART_DEFAULTS.tick, font: { family: 'Cairo', size: 10 } }, grid: { color: CHART_DEFAULTS.grid } }
+          }
+        }
+      });
+    }
+
+    function renderHMFByType() {
+      destroyChart('hmfByTypeChart');
+      const byType = {};
+      filteredData.forEach(d => { const t = d.type.trim(); if (!byType[t]) byType[t] = []; byType[t].push(d.finHMF); });
+      const labels = Object.keys(byType);
+      const vals = labels.map(t => (byType[t].reduce((s, v) => s + v, 0) / byType[t].length).toFixed(1));
+      const colors = labels.map((l, i) => TYPE_COLORS[l] || COLOR_PALETTE[i % COLOR_PALETTE.length]);
+      charts['hmfByTypeChart'] = new Chart(document.getElementById('hmfByTypeChart'), {
+        type: 'bar',
+        data: { labels, datasets: [{ data: vals.map(Number), backgroundColor: colors, borderRadius: 8, borderSkipped: false }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: CHART_DEFAULTS.tick, font: { family: 'Cairo', size: 10 } }, grid: { color: CHART_DEFAULTS.grid } },
+            y: { ticks: { color: CHART_DEFAULTS.tick, font: { family: 'Cairo', size: 10 } }, grid: { color: CHART_DEFAULTS.grid } }
+          }
+        }
+      });
+    }
+
+    function renderDevSuc() {
+      destroyChart('devSucChart');
+      const data = filteredData.slice(-40);
+      charts['devSucChart'] = new Chart(document.getElementById('devSucChart'), {
+        type: 'bar',
+        data: {
+          labels: data.map(d => d.batch),
+          datasets: [{ label: 'انحراف السكروز', data: data.map(d => d.devSuc || 0), backgroundColor: data.map(d => (d.devSuc || 0) > 2 ? 'rgba(224,82,82,0.7)' : 'rgba(201,168,76,0.6)'), borderRadius: 4 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: CHART_DEFAULTS.color, font: { family: 'Cairo', size: 11 } } } },
+          scales: {
+            x: { ticks: { color: CHART_DEFAULTS.tick, font: { family: 'Cairo', size: 10 }, maxRotation: 45 }, grid: { color: CHART_DEFAULTS.grid } },
+            y: { ticks: { color: CHART_DEFAULTS.tick, font: { family: 'Cairo', size: 10 } }, grid: { color: CHART_DEFAULTS.grid } }
+          }
+        }
+      });
+    }
+
+    // ==================== CONTROL CHARTS ====================
+    function updateControl() {
+      const data = filteredData;
+      const sucUCL = parseFloat(document.getElementById('sucUCL').value) || 12;
+      const sucLCL = parseFloat(document.getElementById('sucLCL').value) || 0;
+      const sucMean = parseFloat(document.getElementById('sucMean').value) || 6;
+      const hmfUCL = parseFloat(document.getElementById('hmfUCL').value) || 80;
+      const hmfLCL = parseFloat(document.getElementById('hmfLCL').value) || 0;
+      const hmfMean = parseFloat(document.getElementById('hmfMean').value) || 40;
+
+      // Sucrose gauges
+      const avgSuc = data.length ? (data.reduce((s, d) => s + d.finSuc, 0) / data.length) : 0;
+      const maxSuc = data.length ? Math.max(...data.map(d => d.finSuc)) : 0;
+      const sucViolations = data.filter(d => d.finSuc > sucUCL || d.finSuc < sucLCL).length;
+      const sucGaugesEl = document.getElementById('sucGauges'); if (!sucGaugesEl) return;
+      sucGaugesEl.innerHTML = `
+    <div class="gauge-wrap"><div class="gauge-label">متوسط السكروز</div><div class="gauge-val" style="color:${avgSuc > sucUCL ? '#E05252' : '#C9A84C'}">${avgSuc.toFixed(2)}</div><div class="gauge-status ${avgSuc <= sucUCL ? 'safe' : 'danger'}">${avgSuc <= sucUCL ? '✓ ضمن الحد' : '✗ خارج الحد'}</div></div>
+    <div class="gauge-wrap"><div class="gauge-label">أعلى قيمة</div><div class="gauge-val" style="color:${maxSuc > sucUCL ? '#E05252' : '#4CAF7A'}">${maxSuc.toFixed(2)}</div><div class="gauge-status ${maxSuc <= sucUCL ? 'safe' : 'danger'}">${maxSuc <= sucUCL ? '✓ مقبول' : '✗ تجاوز'}</div></div>
+    <div class="gauge-wrap"><div class="gauge-label">مخالفات السكروز</div><div class="gauge-val" style="color:${sucViolations ? '#E05252' : '#4CAF7A'}">${sucViolations}</div><div class="gauge-status ${sucViolations ? 'danger' : 'safe'}">${sucViolations ? 'تحذير' : '✓ نظيف'}</div></div>`;
+
+      // HMF gauges
+      const avgHMF = data.length ? (data.reduce((s, d) => s + d.finHMF, 0) / data.length) : 0;
+      const maxHMF = data.length ? Math.max(...data.map(d => d.finHMF)) : 0;
+      const hmfViolations = data.filter(d => d.finHMF > hmfUCL).length;
+      const hmfGaugesEl = document.getElementById('hmfGauges'); if (!hmfGaugesEl) return;
+      hmfGaugesEl.innerHTML = `
+    <div class="gauge-wrap"><div class="gauge-label">متوسط HMF</div><div class="gauge-val" style="color:${avgHMF > hmfUCL ? '#E05252' : '#D4870A'}">${avgHMF.toFixed(1)}</div><div class="gauge-status ${avgHMF <= hmfUCL ? 'safe' : 'danger'}">${avgHMF <= hmfUCL ? '✓ ضمن الحد' : '✗ خارج الحد'}</div></div>
+    <div class="gauge-wrap"><div class="gauge-label">أعلى قيمة</div><div class="gauge-val" style="color:${maxHMF > hmfUCL ? '#E05252' : '#4CAF7A'}">${maxHMF.toFixed(1)}</div><div class="gauge-status ${maxHMF <= hmfUCL ? 'safe' : 'danger'}">${maxHMF <= hmfUCL ? '✓ مقبول' : '✗ تجاوز'}</div></div>
+    <div class="gauge-wrap"><div class="gauge-label">مخالفات HMF</div><div class="gauge-val" style="color:${hmfViolations ? '#E05252' : '#4CAF7A'}">${hmfViolations}</div><div class="gauge-status ${hmfViolations ? 'danger' : 'safe'}">${hmfViolations ? 'تحذير' : '✓ نظيف'}</div></div>`;
+
+      // Suc Control Chart
+      destroyChart('sucControlChart');
+      const sd = data.slice(-50);
+      charts['sucControlChart'] = new Chart(document.getElementById('sucControlChart'), {
+        type: 'line',
+        data: {
+          labels: sd.map(d => d.batch),
+          datasets: [
+            { label: 'قيمة السكروز', data: sd.map(d => d.finSuc), borderColor: '#C9A84C', backgroundColor: sd.map(d => d.finSuc > sucUCL || d.finSuc < sucLCL ? '#E05252' : '#C9A84C'), pointRadius: 4, pointBackgroundColor: sd.map(d => d.finSuc > sucUCL || d.finSuc < sucLCL ? '#E05252' : '#C9A84C'), tension: 0.3, fill: false },
+            { label: 'UCL', data: sd.map(() => sucUCL), borderColor: '#E05252', borderDash: [6, 3], pointRadius: 0, borderWidth: 2, fill: false },
+            { label: 'المتوسط', data: sd.map(() => sucMean), borderColor: '#5B9BD5', borderDash: [4, 4], pointRadius: 0, borderWidth: 1, fill: false },
+            { label: 'LCL', data: sd.map(() => sucLCL), borderColor: '#4CAF7A', borderDash: [6, 3], pointRadius: 0, borderWidth: 2, fill: false }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: CHART_DEFAULTS.color, font: { family: 'Cairo', size: 11 } } } },
+          scales: {
+            x: { ticks: { color: CHART_DEFAULTS.tick, font: { family: 'Cairo', size: 9 }, maxRotation: 45 }, grid: { color: CHART_DEFAULTS.grid } },
+            y: { ticks: { color: CHART_DEFAULTS.tick, font: { family: 'Cairo', size: 10 } }, grid: { color: CHART_DEFAULTS.grid } }
+          }
+        }
+      });
+
+      // HMF Control Chart
+      destroyChart('hmfControlChart');
+      charts['hmfControlChart'] = new Chart(document.getElementById('hmfControlChart'), {
+        type: 'line',
+        data: {
+          labels: sd.map(d => d.batch),
+          datasets: [
+            { label: 'قيمة HMF', data: sd.map(d => d.finHMF), borderColor: '#D4870A', pointRadius: 4, pointBackgroundColor: sd.map(d => d.finHMF > hmfUCL ? '#E05252' : '#D4870A'), tension: 0.3, fill: false },
+            { label: 'UCL', data: sd.map(() => hmfUCL), borderColor: '#E05252', borderDash: [6, 3], pointRadius: 0, borderWidth: 2, fill: false },
+            { label: 'المتوسط', data: sd.map(() => hmfMean), borderColor: '#5B9BD5', borderDash: [4, 4], pointRadius: 0, borderWidth: 1, fill: false }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: CHART_DEFAULTS.color, font: { family: 'Cairo', size: 11 } } } },
+          scales: {
+            x: { ticks: { color: CHART_DEFAULTS.tick, font: { family: 'Cairo', size: 9 }, maxRotation: 45 }, grid: { color: CHART_DEFAULTS.grid } },
+            y: { ticks: { color: CHART_DEFAULTS.tick, font: { family: 'Cairo', size: 10 } }, grid: { color: CHART_DEFAULTS.grid } }
+          }
+        }
+      });
+    }
+
+    // ==================== TABLE ====================
+    function renderMainTable(data = filteredData, page = 1) {
+      currentPage = page;
+      const ucl = parseFloat(document.getElementById('sucUCL').value) || 12;
+      const hmfUCL = parseFloat(document.getElementById('hmfUCL').value) || 80;
+      const start = (page - 1) * PAGE_SIZE, end = start + PAGE_SIZE;
+      const pageData = data.slice(start, end);
+      safeSet('tableCount', `${data.length} سجل`);
+      document.getElementById('mainTableBody').innerHTML = pageData.map((d) => {
+        const globalIdx = allData.indexOf(d);
+        const sucOk = d.finSuc <= ucl, hmfOk = d.finHMF <= hmfUCL;
+        return `<tr>
+      <td>
+        <div class="action-btns">
+          <button class="btn-sm btn-view" onclick="viewRecord(${globalIdx})">👁️</button>
+          <button class="btn-sm btn-edit" onclick="editRecord(${globalIdx})">✏️</button>
+          <button class="btn-sm btn-delete" onclick="deleteRecord(${globalIdx})">🗑️</button>
+        </div>
+      </td>
+      <td>${formatDate(d.date)}</td>
+      <td class="rotation-number">${d.batch}</td>
+      <td>${d.type.trim()}</td>
+      <td>${d.mixSuc?.toFixed(3) || '—'}</td>
+      <td>${d.mixHMF?.toFixed(2) || '—'}</td>
+      <td>${d.purSuc?.toFixed(3) || '—'}</td>
+      <td>${d.purHMF?.toFixed(2) || '—'}</td>
+      <td class="${sucOk ? '' : 'val-critical'}">${d.finSuc?.toFixed(3)}</td>
+      <td class="${hmfOk ? '' : 'val-critical'}">${d.finHMF?.toFixed(2)}</td>
+      <td>${d.devSuc?.toFixed(3) || '0'}</td>
+      <td>${d.devHMF?.toFixed(3) || '0'}</td>
+      <td>${d.weight || '—'}</td>
+      <td>${d.rotation || '—'}</td>
+      <td>${sucOk ? '<span class="badge safe">✓ مقبول</span>' : '<span class="badge danger">✗ مرفوض</span>'}</td>
+      <td>${hmfOk ? '<span class="badge safe">✓ مقبول</span>' : '<span class="badge danger">✗ مرفوض</span>'}</td>
+    </tr>`;
+      }).join('');
+      renderPagination(data.length, page, 'tablePagination', (p) => renderMainTable(filteredData, p));
+    }
+
+    function filterTable(val) {
+      const q = val.toLowerCase().trim();
+      if (!q) { renderMainTable(filteredData); return; }
+      const res = filteredData.filter(d =>
+        d.batch.toLowerCase().includes(q) ||
+        d.type.trim().toLowerCase().includes(q) ||
+        formatDate(d.date).includes(q) ||
+        (d.weight || '').toLowerCase().includes(q)
+      );
+      renderMainTable(res);
+    }
+
+    function renderPagination(total, current, containerId, callback) {
+      const pages = Math.ceil(total / PAGE_SIZE);
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      if (pages <= 1) { el.innerHTML = ''; return; }
+      let html = '';
+      const max = 5;
+      const start = Math.max(1, current - Math.floor(max / 2));
+      const end = Math.min(pages, start + max - 1);
+      if (current > 1) html += `<button class="page-btn" onclick="(${callback.toString()})(${current - 1})">‹</button>`;
+      for (let i = start; i <= end; i++) {
+        html += `<button class="page-btn ${i === current ? 'active' : ''}" onclick="(${callback.toString()})(${i})">${i}</button>`;
+      }
+      if (current < pages) html += `<button class="page-btn" onclick="(${callback.toString()})(${current + 1})">›</button>`;
+      el.innerHTML = html;
+    }
+
+    // ==================== SEARCH ====================
+    function quickSearch(q) { document.getElementById('searchInput').value = q; performSearch(); }
+    function liveSearch(val) { performSearch(val); }
+    function performSearch(query = null) {
+      const q = (query !== null ? query : document.getElementById('searchInput').value).toLowerCase().trim();
+      renderSearchResults(q);
+    }
+
+    function renderSearchResults(q) {
+      const container = document.getElementById('searchResults');
+      const info = document.getElementById('searchInfo');
+      let res = q ? allData.filter(d =>
+        d.batch.toLowerCase().includes(q) ||
+        d.type.trim().toLowerCase().includes(q) ||
+        formatDate(d.date).includes(q) ||
+        (d.weight || '').toLowerCase().includes(q) ||
+        (d.rotation || '').includes(q)
+      ) : allData.slice(0, 20);
+      if (!container || !info) return;
+      info.innerHTML = q ? `نتائج البحث: <span>${res.length}</span> سجل` : `آخر <span>${res.length}</span> سجل محمّل`;
+      if (!res.length) {
+        container.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><h3>لا توجد نتائج</h3><p>جرب البحث بكلمة أخرى</p></div>`;
+        return;
+      }
+      const ucl = parseFloat(document.getElementById('sucUCL').value) || 12;
+      const hmfUCL = parseFloat(document.getElementById('hmfUCL').value) || 80;
+      container.innerHTML = res.slice(0, 30).map(d => {
+        const sucOk = d.finSuc <= ucl, hmfOk = d.finHMF <= hmfUCL;
+        const status = sucOk && hmfOk ? 'safe' : (!sucOk && !hmfOk ? 'danger' : 'warning');
+        const statusText = sucOk && hmfOk ? '✓ مقبول' : (!sucOk && !hmfOk ? '✗ مرفوض' : '⚠ تحقق');
+        const globalIdx = allData.indexOf(d);
+        return `<div class="result-card">
+      <div class="rc-batch">
+        <div class="batch-num">${d.batch}</div>
+        <div class="batch-label">التشغيلة</div>
+      </div>
+      <div class="rc-info">
+        <div class="type-name">${d.type.trim()}</div>
+        <div class="meta">
+          <span>📅 ${formatDate(d.date)}</span>
+          <span>⚖️ ${d.weight || '—'}</span>
+          <span>🔄 ${d.rotation || '—'}</span>
+        </div>
+      </div>
+      <div class="rc-vals">
+        <div class="rc-val-item"><div class="val-num ${sucOk ? 'val-safe' : 'val-critical'}">${d.finSuc.toFixed(2)}</div><div class="val-lbl">سكروز</div></div>
+        <div class="rc-val-item"><div class="val-num ${hmfOk ? 'val-safe' : 'val-critical'}">${d.finHMF.toFixed(1)}</div><div class="val-lbl">HMF</div></div>
+        <div class="rc-val-item"><div class="badge ${status}">${statusText}</div></div>
+        <div class="rc-val-item no-print">
+          <button class="btn-sm btn-view" onclick="viewRecord(${globalIdx})">👁️</button>
+          <button class="btn-sm btn-edit" onclick="editRecord(${globalIdx})">✏️</button>
+        </div>
+      </div>
+    </div>`;
+      }).join('');
+    }
+
+    // ==================== DATA ENTRY ====================
+    document.getElementById('entType').addEventListener('change', function () {
+      document.getElementById('newTypeGroup').style.display = this.value === 'صنف جديد' ? 'flex' : 'none';
+    });
+
+    function checkEntryLive() {
+      const suc = parseFloat(document.getElementById('entFinSuc').value);
+      const hmf = parseFloat(document.getElementById('entFinHMF').value);
+      const ucl = parseFloat(document.getElementById('sucUCL').value) || 12;
+      const hmfUCL = parseFloat(document.getElementById('hmfUCL').value) || 80;
+      const lc = document.getElementById('liveCheck');
+      if (isNaN(suc) && isNaN(hmf)) { lc.classList.add('hidden'); return; }
+      const issues = [];
+      if (!isNaN(suc) && suc > ucl) issues.push(`السكروز (${suc}) يتجاوز الحد الأعلى (${ucl})`);
+      if (!isNaN(hmf) && hmf > hmfUCL) issues.push(`HMF (${hmf}) يتجاوز الحد الأعلى (${hmfUCL})`);
+      lc.classList.remove('hidden');
+      if (issues.length) {
+        lc.className = 'alert-banner danger';
+        lc.innerHTML = '⚠️ تحذير جودة: ' + issues.join(' | ');
+      } else {
+        lc.className = 'alert-banner success';
+        lc.innerHTML = '✅ القيم ضمن الحدود المسموحة';
+      }
+    }
+
+    function saveEntry() {
+      const date = document.getElementById('entDate').value;
+      const batch = document.getElementById('entBatch').value.trim();
+      let type = document.getElementById('entType').value;
+      if (type === 'صنف جديد') type = document.getElementById('entNewType').value.trim();
+      const finSuc = parseFloat(document.getElementById('entFinSuc').value);
+      const finHMF = parseFloat(document.getElementById('entFinHMF').value);
+      if (!date || !batch || !type || isNaN(finSuc) || isNaN(finHMF)) {
+        showToast('error', '❌ يرجى ملء الحقول المطلوبة');
+        return;
+      }
+      const mixSuc = parseFloat(document.getElementById('entMixSuc').value) || finSuc;
+      const mixHMF = parseFloat(document.getElementById('entMixHMF').value) || finHMF;
+      const entry = {
+        date: dateToExcel(date), batch, type,
+        mixSuc, mixHMF,
+        purSuc: parseFloat(document.getElementById('entPurSuc').value) || finSuc,
+        purHMF: parseFloat(document.getElementById('entPurHMF').value) || finHMF,
+        finSuc, finHMF,
+        devSuc: Math.abs(mixSuc - finSuc),
+        devHMF: Math.abs(mixHMF - finHMF),
+        rotation: document.getElementById('entRotation').value || '0',
+        weight: document.getElementById('entWeight').value || '-',
+        batchNum: batch,
+      };
+      allData.push(entry);
+      newEntries.push(entry);
+      filteredData = [...allData];
+      reportData = [...allData];
+      saveToStorage();
+      updateStats();
+      renderCharts();
+      renderMainTable();
+      renderRecentEntries();
+      populateTypeFilter();
+      populateReportFilter();
+      safeSet('totalRecordsCount', allData.length);
+      showToast('success', `✅ تم حفظ التشغيلة ${batch} بنجاح`);
+      clearForm();
+    }
+
+    function clearForm() {
+      ['entDate', 'entBatch', 'entMixSuc', 'entMixHMF', 'entPurSuc', 'entPurHMF', 'entFinSuc', 'entFinHMF', 'entRotation', 'entWeight', 'entNewType'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      document.getElementById('entType').value = '';
+      document.getElementById('newTypeGroup').style.display = 'none';
+      document.getElementById('liveCheck').classList.add('hidden');
+    }
+
+    function renderRecentEntries() {
+      const tbody = document.getElementById('recentTableBody');
+      const ucl = parseFloat(document.getElementById('sucUCL').value) || 12;
+      const hmfUCL = parseFloat(document.getElementById('hmfUCL').value) || 80;
+      tbody.innerHTML = '';
+      [...newEntries].reverse().forEach(d => {
+        const ok = d.finSuc <= ucl && d.finHMF <= hmfUCL;
+        tbody.innerHTML += `<tr>
+      <td>${formatDate(d.date)}</td>
+      <td class="rotation-number">${d.batch}</td>
+      <td>${d.type.trim()}</td>
+      <td class="${d.finSuc > ucl ? 'val-critical' : ''}">${d.finSuc.toFixed(3)}</td>
+      <td class="${d.finHMF > hmfUCL ? 'val-critical' : ''}">${d.finHMF.toFixed(2)}</td>
+      <td>${ok ? '<span class="badge safe">✓ مقبول</span>' : '<span class="badge danger">✗ مرفوض</span>'}</td>
+    </tr>`;
+      });
+      safeSet('recentCount', `${newEntries.length} سجل`);
+    }
+
+    // ==================== NAV MOBILE ====================
+    function toggleMobileMenu() {
+      const nav = document.getElementById('navTabs');
+      nav.style.flexWrap = nav.style.flexWrap === 'wrap' ? 'nowrap' : 'wrap';
+    }
+
+    // ==================== UTILS ====================
+    function excelDateToDate(serial) {
+      if (!serial || isNaN(serial)) return new Date();
+      return new Date(Date.UTC(1899, 11, 30) + serial * 86400000);
+    }
+
+    function dateToExcel(str) {
+      const d = new Date(str);
+      return Math.floor((d - new Date(Date.UTC(1899, 11, 30))) / 86400000);
+    }
+
+    function formatDate(serial) {
+      if (!serial || isNaN(serial)) return '—';
+      try { return excelDateToDate(serial).toLocaleDateString('ar-EG', { year: 'numeric', month: '2-digit', day: '2-digit' }); }
+      catch { return '—'; }
+    }
+
+    function formatDateInput(serial) {
+      if (!serial || isNaN(serial)) return '';
+      try {
+        const d = excelDateToDate(serial);
+        return d.toISOString().slice(0, 10);
+      } catch { return ''; }
+    }
+
+    function switchTab(id, btn) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+      document.getElementById('sec-' + id).classList.add('active');
+      btn.classList.add('active');
+      if (id === 'control') updateControl();
+      if (id === 'search') renderSearchResults(document.getElementById('searchInput').value.toLowerCase().trim());
+      if (id === 'reports') { reportData = [...allData]; safeSet('rptCount', allData.length); renderReportTable(); }
+      if (id === 'settings') { updateSettingsInfo(); loadThresholdSettings(); }
+    }
+
+    function showToast(type, msg) {
+      const c = document.getElementById('toastContainer');
+      const t = document.createElement('div');
+      t.className = `toast ${type}`;
+      t.innerHTML = msg;
+      c.appendChild(t);
+      setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(-100%)'; t.style.transition = 'all 0.3s'; setTimeout(() => t.remove(), 300); }, 4000);
+    }
+
+
+    // ==================== THRESHOLD MANAGEMENT ====================
+    const LS_THRESHOLD_KEY = 'honey_qc_thresholds';
+    let applyThresholdScope = 'all'; // 'all' or 'new'
+
+    function selectApplyOption(scope) {
+      applyThresholdScope = scope;
+      document.getElementById('applyAll_btn').classList.toggle('selected', scope === 'all');
+      document.getElementById('applyNew_btn').classList.toggle('selected', scope === 'new');
+    }
+
+    function loadThresholdSettings() {
+      // Sync settings inputs with control chart inputs
+      const fields = [
+        ['sucUCL','sett_sucUCL'], ['sucLCL','sett_sucLCL'], ['sucMean','sett_sucMean'],
+        ['hmfUCL','sett_hmfUCL'], ['hmfLCL','sett_hmfLCL'], ['hmfMean','sett_hmfMean']
+      ];
+      fields.forEach(([src, dst]) => {
+        const srcEl = document.getElementById(src);
+        const dstEl = document.getElementById(dst);
+        if (srcEl && dstEl) dstEl.value = srcEl.value;
+      });
+    }
+
+    function saveThresholds() {
+      const newSucUCL = parseFloat(document.getElementById('sett_sucUCL').value);
+      const newSucLCL = parseFloat(document.getElementById('sett_sucLCL').value);
+      const newSucMean = parseFloat(document.getElementById('sett_sucMean').value);
+      const newHmfUCL = parseFloat(document.getElementById('sett_hmfUCL').value);
+      const newHmfLCL = parseFloat(document.getElementById('sett_hmfLCL').value);
+      const newHmfMean = parseFloat(document.getElementById('sett_hmfMean').value);
+
+      if ([newSucUCL, newSucLCL, newSucMean, newHmfUCL, newHmfLCL, newHmfMean].some(isNaN)) {
+        showToast('error', '❌ يرجى إدخال قيم صحيحة لجميع الحدود');
+        return;
+      }
+      if (newSucUCL <= newSucLCL) { showToast('error', '❌ UCL السكروز يجب أن يكون أكبر من LCL'); return; }
+      if (newHmfUCL <= newHmfLCL) { showToast('error', '❌ UCL HMF يجب أن يكون أكبر من LCL'); return; }
+
+      // Apply to control chart inputs
+      document.getElementById('sucUCL').value = newSucUCL;
+      document.getElementById('sucLCL').value = newSucLCL;
+      document.getElementById('sucMean').value = newSucMean;
+      document.getElementById('hmfUCL').value = newHmfUCL;
+      document.getElementById('hmfLCL').value = newHmfLCL;
+      document.getElementById('hmfMean').value = newHmfMean;
+
+      // Save to localStorage
+      const thresholds = { sucUCL: newSucUCL, sucLCL: newSucLCL, sucMean: newSucMean, hmfUCL: newHmfUCL, hmfLCL: newHmfLCL, hmfMean: newHmfMean, scope: applyThresholdScope, savedAt: new Date().toISOString() };
+      localStorage.setItem(LS_THRESHOLD_KEY, JSON.stringify(thresholds));
+
+      // Update scope badge
+      const scopeText = applyThresholdScope === 'all' ? 'جميع البيانات' : 'البيانات الجديدة فقط';
+      
+      // Refresh everything that uses thresholds
+      updateStats();
+      renderCharts();
+      renderMainTable();
+      updateControl();
+      if (document.getElementById('sec-reports').classList.contains('active')) renderReportTable();
+      if (document.getElementById('sec-search').classList.contains('active')) renderSearchResults(document.getElementById('searchInput').value.toLowerCase().trim());
+      renderRecentEntries();
+
+      showToast('success', `✅ تم تحديث الحدود الحرجة وتطبيقها على ${scopeText}`);
+    }
+
+    function loadSavedThresholds() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(LS_THRESHOLD_KEY) || '{}');
+        if (saved.sucUCL !== undefined) {
+          document.getElementById('sucUCL').value = saved.sucUCL;
+          document.getElementById('sucLCL').value = saved.sucLCL;
+          document.getElementById('sucMean').value = saved.sucMean;
+          document.getElementById('hmfUCL').value = saved.hmfUCL;
+          document.getElementById('hmfLCL').value = saved.hmfLCL;
+          document.getElementById('hmfMean').value = saved.hmfMean;
+        }
+      } catch(e) {}
+    }
+
+    // ==================== STAT CARD INTERACTIVE TOOLTIPS ====================
+    function showStatTooltip(cardEl, title, rows) {
+      closeStatTooltip();
+      const rect = cardEl.getBoundingClientRect();
+      const tooltip = document.createElement('div');
+      tooltip.className = 'stat-tooltip';
+      tooltip.id = 'activeStatTooltip';
+      tooltip.style.position = 'fixed';
+      tooltip.innerHTML = `<button class="tt-close" onclick="closeStatTooltip()">✕</button><h4>${title}</h4>` +
+        rows.map(([lbl, val]) => `<div class="tt-row"><span class="tt-label">${lbl}</span><span class="tt-val">${val}</span></div>`).join('');
+      document.body.appendChild(tooltip);
+      // Position
+      let top = rect.bottom + 8;
+      let left = rect.right - tooltip.offsetWidth;
+      if (top + 200 > window.innerHeight) top = rect.top - 220;
+      if (left < 8) left = 8;
+      tooltip.style.top = top + 'px';
+      tooltip.style.left = left + 'px';
+      // Animate card
+      cardEl.style.animation = 'none';
+      setTimeout(() => { cardEl.style.animation = ''; cardEl.style.boxShadow = '0 0 25px rgba(201,168,76,0.3)'; }, 10);
+      setTimeout(() => { if(cardEl) cardEl.style.boxShadow = ''; }, 800);
+      // Auto-close
+      setTimeout(closeStatTooltip, 6000);
+    }
+
+    function closeStatTooltip() {
+      const t = document.getElementById('activeStatTooltip');
+      if (t) t.remove();
+    }
+
+    document.addEventListener('click', function(e) {
+      const tooltip = document.getElementById('activeStatTooltip');
+      if (tooltip && !tooltip.contains(e.target) && !e.target.closest('.stat-card')) {
+        closeStatTooltip();
+      }
+    });
+
+    function handleStatClick(cardType) {
+      const data = filteredData;
+      const ucl = parseFloat(document.getElementById('sucUCL').value) || 12;
+      const hmfUCL = parseFloat(document.getElementById('hmfUCL').value) || 80;
+      const cardEl = event.currentTarget;
+
+      if (cardType === 'total') {
+        const types = [...new Set(data.map(d => d.type.trim()))].filter(Boolean);
+        showStatTooltip(cardEl, '🍯 إجمالي التشغيلات', [
+          ['إجمالي السجلات', data.length],
+          ['مقبول', data.filter(d => d.finSuc <= ucl && d.finHMF <= hmfUCL).length],
+          ['مرفوض', data.filter(d => d.finSuc > ucl || d.finHMF > hmfUCL).length],
+          ['أصناف فريدة', types.length],
+          ['أقدم تاريخ', data.length ? formatDate(Math.min(...data.map(d=>d.date))) : '—'],
+          ['أحدث تاريخ', data.length ? formatDate(Math.max(...data.map(d=>d.date))) : '—'],
+        ]);
+      } else if (cardType === 'types') {
+        const byType = {};
+        data.forEach(d => { const t = d.type.trim(); byType[t] = (byType[t]||0)+1; });
+        const rows = Object.entries(byType).sort((a,b)=>b[1]-a[1]).map(([t,c]) => [t, `${c} تشغيلة`]);
+        showStatTooltip(cardEl, '🏷️ توزيع الأصناف', rows.length ? rows : [['لا توجد بيانات','—']]);
+      } else if (cardType === 'pass') {
+        const passed = data.filter(d => d.finSuc <= ucl && d.finHMF <= hmfUCL);
+        const rate = data.length ? Math.round(passed.length/data.length*100) : 0;
+        showStatTooltip(cardEl, '✅ التشغيلات المقبولة', [
+          ['عدد المقبول', passed.length],
+          ['نسبة القبول', rate + '%'],
+          ['UCL السكروز', ucl],
+          ['UCL HMF', hmfUCL],
+          ['أعلى سكروز مقبول', passed.length ? Math.max(...passed.map(d=>d.finSuc)).toFixed(3) : '—'],
+          ['أعلى HMF مقبول', passed.length ? Math.max(...passed.map(d=>d.finHMF)).toFixed(2) : '—'],
+        ]);
+      } else if (cardType === 'fail') {
+        const failed = data.filter(d => d.finSuc > ucl || d.finHMF > hmfUCL);
+        showStatTooltip(cardEl, '⚠️ التشغيلات خارج الحد', [
+          ['عدد المرفوض', failed.length],
+          ['نسبة الرفض', data.length ? Math.round(failed.length/data.length*100)+'%' : '0%'],
+          ['سبب: سكروز فقط', failed.filter(d=>d.finSuc>ucl&&d.finHMF<=hmfUCL).length],
+          ['سبب: HMF فقط', failed.filter(d=>d.finSuc<=ucl&&d.finHMF>hmfUCL).length],
+          ['كلاهما', failed.filter(d=>d.finSuc>ucl&&d.finHMF>hmfUCL).length],
+        ]);
+      } else if (cardType === 'suc') {
+        const vals = data.map(d=>d.finSuc).filter(v=>!isNaN(v));
+        showStatTooltip(cardEl, '🔬 إحصاءات السكروز', [
+          ['المتوسط', vals.length ? (vals.reduce((s,v)=>s+v,0)/vals.length).toFixed(3) : '—'],
+          ['الأعلى', vals.length ? Math.max(...vals).toFixed(3) : '—'],
+          ['الأدنى', vals.length ? Math.min(...vals).toFixed(3) : '—'],
+          ['UCL الحالي', ucl],
+          ['خارج الحد', vals.filter(v=>v>ucl).length],
+        ]);
+      } else if (cardType === 'hmf') {
+        const vals = data.map(d=>d.finHMF).filter(v=>!isNaN(v));
+        showStatTooltip(cardEl, '🌡️ إحصاءات HMF', [
+          ['المتوسط', vals.length ? (vals.reduce((s,v)=>s+v,0)/vals.length).toFixed(2) : '—'],
+          ['الأعلى', vals.length ? Math.max(...vals).toFixed(2) : '—'],
+          ['الأدنى', vals.length ? Math.min(...vals).toFixed(2) : '—'],
+          ['UCL الحالي', hmfUCL],
+          ['خارج الحد', vals.filter(v=>v>hmfUCL).length],
+        ]);
+      }
+    }
+
+    // ==================== CHART DETAIL POPUP ====================
+    let detailChart = null;
+
+    function showChartDetail(chartId, title) {
+      if (document.getElementById('chartDetailOverlay')) return;
+      const overlay = document.createElement('div');
+      overlay.className = 'chart-detail-overlay';
+      overlay.id = 'chartDetailOverlay';
+      overlay.innerHTML = `
+        <div class="chart-detail-box">
+          <div class="chart-detail-header">
+            <div style="font-size:16px;font-weight:900;color:var(--gold-light);display:flex;align-items:center;gap:10px;">
+              <span style="width:8px;height:8px;border-radius:50%;background:var(--gold);display:inline-block;"></span>${title}
+            </div>
+            <button class="modal-close" onclick="closeChartDetail()">✕</button>
+          </div>
+          <div style="position:relative;height:420px;"><canvas id="detailChartCanvas"></canvas></div>
+          <div id="detailChartStats" style="margin-top:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;"></div>
+        </div>`;
+      overlay.addEventListener('click', function(e) { if (e.target === overlay) closeChartDetail(); });
+      document.body.appendChild(overlay);
+
+      // Clone chart config from existing chart
+      const existingChart = charts[chartId];
+      if (existingChart) {
+        setTimeout(() => {
+          const ctx = document.getElementById('detailChartCanvas');
+          if (!ctx) return;
+          if (detailChart) { detailChart.destroy(); }
+          detailChart = new Chart(ctx, {
+            type: existingChart.config.type,
+            data: JSON.parse(JSON.stringify(existingChart.config.data)),
+            options: {
+              ...existingChart.config.options,
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: { duration: 800, easing: 'easeOutQuart' },
+              plugins: {
+                ...existingChart.config.options?.plugins,
+                tooltip: {
+                  callbacks: {
+                    label: function(ctx) {
+                      return ` ${ctx.dataset.label || ''}: ${typeof ctx.raw === 'number' ? ctx.raw.toFixed(2) : ctx.raw}`;
+                    }
+                  }
+                }
+              }
+            }
+          });
+          // Stats summary
+          const data = filteredData;
+          const ucl = parseFloat(document.getElementById('sucUCL').value) || 12;
+          const hmfUCL = parseFloat(document.getElementById('hmfUCL').value) || 80;
+          let statsHtml = '';
+          if (chartId.includes('suc') || chartId.includes('Suc')) {
+            const vals = data.map(d=>d.finSuc);
+            statsHtml = [
+              ['المتوسط', vals.length ? (vals.reduce((s,v)=>s+v,0)/vals.length).toFixed(3) : '—'],
+              ['الأعلى', vals.length ? Math.max(...vals).toFixed(3) : '—'],
+              ['الأدنى', vals.length ? Math.min(...vals).toFixed(3) : '—'],
+              ['فوق UCL', vals.filter(v=>v>ucl).length + ' سجل'],
+            ].map(([l,v]) => `<div style="background:var(--dark-3);border:1px solid var(--panel-border);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:10px;color:var(--text-muted);">${l}</div><div style="font-size:16px;font-weight:900;color:var(--gold-light);">${v}</div></div>`).join('');
+          } else if (chartId.includes('hmf') || chartId.includes('HMF')) {
+            const vals = data.map(d=>d.finHMF);
+            statsHtml = [
+              ['المتوسط', vals.length ? (vals.reduce((s,v)=>s+v,0)/vals.length).toFixed(2) : '—'],
+              ['الأعلى', vals.length ? Math.max(...vals).toFixed(2) : '—'],
+              ['الأدنى', vals.length ? Math.min(...vals).toFixed(2) : '—'],
+              ['فوق UCL', vals.filter(v=>v>hmfUCL).length + ' سجل'],
+            ].map(([l,v]) => `<div style="background:var(--dark-3);border:1px solid var(--panel-border);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:10px;color:var(--text-muted);">${l}</div><div style="font-size:16px;font-weight:900;color:var(--gold-light);">${v}</div></div>`).join('');
+          }
+          if (statsHtml) document.getElementById('detailChartStats').innerHTML = statsHtml;
+        }, 50);
+      }
+    }
+
+    function closeChartDetail() {
+      if (detailChart) { detailChart.destroy(); detailChart = null; }
+      const ov = document.getElementById('chartDetailOverlay');
+      if (ov) ov.remove();
+    }
+
+
+    // Safe DOM setter helper
+    function safeSet(id, val, prop = 'textContent') {
+      const el = document.getElementById(id);
+      if (el) el[prop] = val;
+    }
+    function safeHTML(id, html) { safeSet(id, html, 'innerHTML'); }
+
+    // ==================== START ====================
+    init();
+  </script>
+</body>
+
+</html>
