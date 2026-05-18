@@ -2898,7 +2898,37 @@
 
   <!-- Hidden print area -->
   <div id="printArea" style="display:none;"></div>
+<!-- ═══════════════════════════════════════ -->
+<!--           FOOTER — Samir Magdy          -->
+<!-- ═══════════════════════════════════════ -->
+<style>
+.samir-footer{text-align:center;padding:18px 0 14px;margin-top:40px;border-top:1px solid rgba(0,0,0,0.07);font-family:'Cairo',sans-serif;direction:ltr;user-select:none}
+.samir-footer .sf-inner{display:inline-flex;align-items:center;gap:9px;background:linear-gradient(135deg,#f8fdf4,#edf7e5);border:1px solid rgba(74,153,56,0.18);border-radius:50px;padding:6px 18px 6px 10px;box-shadow:0 2px 12px rgba(74,153,56,0.10);transition:box-shadow .3s,transform .3s}
+.samir-footer .sf-inner:hover{box-shadow:0 4px 20px rgba(74,153,56,0.22);transform:translateY(-1px)}
+.samir-footer .sf-text{font-size:12px;color:#4a5568;letter-spacing:.3px;font-weight:500}
+.samir-footer .sf-text strong{color:#276b19;font-weight:700}
+.samir-footer .sf-icon-wrap{position:relative;display:flex;align-items:center;justify-content:center;width:32px;height:32px;flex-shrink:0}
+.samir-footer .sf-pulse{position:absolute;width:32px;height:32px;border-radius:50%;background:rgba(74,153,56,0.25);animation:sf-pulse-ring 2s ease-out infinite}
+.samir-footer .sf-pulse:nth-child(2){animation-delay:.6s}
+@keyframes sf-pulse-ring{0%{transform:scale(.7);opacity:.8}70%{transform:scale(1.5);opacity:0}100%{transform:scale(1.5);opacity:0}}
+.samir-footer .sf-icon-link{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#5cb85c,#276b19);box-shadow:0 2px 8px rgba(74,153,56,0.35);text-decoration:none;transition:transform .25s,box-shadow .25s}
+.samir-footer .sf-icon-link:hover{transform:scale(1.15) rotate(8deg);box-shadow:0 4px 14px rgba(74,153,56,0.5)}
+.samir-footer .sf-icon-link svg{width:14px;height:14px;fill:#fff}
+</style>
 
+<footer class="samir-footer">
+  <div class="sf-inner">
+    <div class="sf-icon-wrap">
+      <span class="sf-pulse"></span>
+      <span class="sf-pulse"></span>
+      <a class="sf-icon-link" href="https://samermagdy1.github.io/C-V/" target="_blank" rel="noopener noreferrer" title="تواصل مع Samir Magdy">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+      </a>
+    </div>
+    <span class="sf-text">Developed by <strong>Samir Magdy</strong></span>
+  </div>
+</footer>
+<!-- ═══════════════════════════════════════ -->
   <script>
     // ==================== DATA ====================
     let allData = [];
