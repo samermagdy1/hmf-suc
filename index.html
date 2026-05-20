@@ -2907,18 +2907,29 @@
 .samir-footer .sf-inner:hover{box-shadow:0 4px 20px rgba(74,153,56,0.22);transform:translateY(-1px)}
 .samir-footer .sf-text{font-size:12px;color:#4a5568;letter-spacing:.3px;font-weight:500}
 .samir-footer .sf-text strong{color:#276b19;font-weight:700}
-.samir-footer .sf-icon-wrap{position:relative;display:flex;align-items:center;justify-content:center;width:32px;height:32px;flex-shrink:0}
-.samir-footer .sf-pulse{position:absolute;width:32px;height:32px;border-radius:50%;background:rgba(74,153,56,0.25);animation:sf-pulse-ring 2s ease-out infinite}
-.samir-footer .sf-pulse:nth-child(2){animation-delay:.6s}
-@keyframes sf-pulse-ring{0%{transform:scale(.7);opacity:.8}70%{transform:scale(1.5);opacity:0}100%{transform:scale(1.5);opacity:0}}
-.samir-footer .sf-icon-link{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#5cb85c,#276b19);box-shadow:0 2px 8px rgba(74,153,56,0.35);text-decoration:none;transition:transform .25s,box-shadow .25s}
-.samir-footer .sf-icon-link:hover{transform:scale(1.15) rotate(8deg);box-shadow:0 4px 14px rgba(74,153,56,0.5)}
-.samir-footer .sf-icon-link svg{width:14px;height:14px;fill:#fff}
+.samir-footer .sf-icon-wrap{position:relative;display:flex;align-items:center;justify-content:center;width:44px;height:44px;flex-shrink:0}
+.samir-footer .sf-pulse{position:absolute;border-radius:50%;background:transparent;border:2.5px solid #3dbe3d;animation:sf-pulse-ring 1.6s ease-out infinite}
+.samir-footer .sf-pulse:nth-child(1){width:44px;height:44px;animation-delay:0s}
+.samir-footer .sf-pulse:nth-child(2){width:44px;height:44px;animation-delay:0.55s}
+.samir-footer .sf-pulse:nth-child(3){width:44px;height:44px;animation-delay:1.1s}
+@keyframes sf-pulse-ring{
+  0%  {transform:scale(.65);opacity:1;border-color:#3dbe3d}
+  60% {opacity:.5;border-color:#7de87d}
+  100%{transform:scale(2);opacity:0;border-color:#3dbe3d}
+}
+.samir-footer .sf-icon-link{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#4ecb4e,#1e7a1e);box-shadow:0 0 0 4px rgba(61,190,61,0.25),0 3px 10px rgba(30,122,30,0.5);text-decoration:none;transition:transform .25s,box-shadow .25s;animation:sf-icon-glow 1.6s ease-in-out infinite alternate}
+@keyframes sf-icon-glow{
+  0%  {box-shadow:0 0 0 4px rgba(61,190,61,0.2),0 3px 10px rgba(30,122,30,0.4)}
+  100%{box-shadow:0 0 0 7px rgba(61,190,61,0.35),0 4px 18px rgba(30,122,30,0.65)}
+}
+.samir-footer .sf-icon-link:hover{transform:scale(1.2) rotate(10deg);box-shadow:0 0 0 8px rgba(61,190,61,0.4),0 6px 22px rgba(30,122,30,0.7);animation:none}
+.samir-footer .sf-icon-link svg{width:15px;height:15px;fill:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.3))}
 </style>
 
 <footer class="samir-footer">
   <div class="sf-inner">
     <div class="sf-icon-wrap">
+      <span class="sf-pulse"></span>
       <span class="sf-pulse"></span>
       <span class="sf-pulse"></span>
       <a class="sf-icon-link" href="https://samermagdy1.github.io/C-V/" target="_blank" rel="noopener noreferrer" title="تواصل مع Samir Magdy">
@@ -2928,6 +2939,7 @@
     <span class="sf-text">Developed by <strong>Samir Magdy</strong></span>
   </div>
 </footer>
+<!-- ═══════════════════════════════════════ -->
 <!-- ═══════════════════════════════════════ -->
   <script>
     // ==================== DATA ====================
